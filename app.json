@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "نور الدين",
+    "slug": "noor-al-deen",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0D1B2A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.nooraldeen.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "نحتاج موقعك لحساب أوقات الصلاة الدقيقة"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0D1B2A"
+      },
+      "package": "com.nooraldeen.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "SCHEDULE_EXACT_ALARM"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#C9922E",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "نحتاج موقعك لحساب أوقات الصلاة الدقيقة"
+        }
+      ]
+    ]
+  }
+}
