@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, I18nManager, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, I18nManager, StatusBar, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import {
   useFonts,
   Amiri_400Regular,
@@ -17,17 +18,40 @@ import {
 import { COLORS } from './src/constants/theme';
 import AppNavigator from './src/navigation/AppNavigator';
 import AICompanion from './src/components/AICompanion';
+import { PrayerCallScreen } from './src/components/PrayerCallScreen';
 import { requestNotificationPermission } from './src/services/notifications';
 import { updateStreak } from './src/services/storage';
 
-// Force RTL
+// ── BUG 1 FIX: await at top level is illegal in React Native.
+// The Android channel setup must live inside an async function, not at module scope.
+async function setupAndroidChannel() {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('prayer-call', {
+      name: 'نداء الصلاة',
+      importance: Notifications.AndroidImportance.MAX,
+      sound: 'adhan.mp3',
+      vibrationPattern: [0, 500, 200, 500],
+      lightColor: '#C9922E',
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      bypassDnd: true,
+    });
+  }
+}
+
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 SplashScreen.preventAutoHideAsync();
 
+interface PrayerCallData {
+  prayer: string;
+  arabic: string;
+  time: string;
+}
+
 export default function App() {
   const [appReady, setAppReady] = useState(false);
+  const [callData, setCallData] = useState<PrayerCallData | null>(null);
 
   const [fontsLoaded] = useFonts({
     Amiri_400Regular,
@@ -41,6 +65,8 @@ export default function App() {
   useEffect(() => {
     async function prepare() {
       try {
+        // ── BUG 1 FIX: call channel setup here, inside async function
+        await setupAndroidChannel();
         await requestNotificationPermission();
         await updateStreak();
       } catch (e) {
@@ -50,6 +76,39 @@ export default function App() {
       }
     }
     prepare();
+  }, []);
+
+  // ── BUG 2 FIX: Notification listeners must be inside useEffect, not at module scope.
+  // They were already correct here — keeping them as-is.
+  useEffect(() => {
+    // App in foreground — show call screen immediately
+    const foregroundSub = Notifications.addNotificationReceivedListener(notification => {
+      const data = notification.request.content.data as any;
+      if (data?.type === 'PRAYER_CALL') {
+        setCallData({
+          prayer: data.prayer,
+          arabic: data.prayerArabic,
+          time: data.prayerTime,
+        });
+      }
+    });
+
+    // App in background/killed — user tapped notification
+    const responseSub = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data as any;
+      if (data?.type === 'PRAYER_CALL') {
+        setCallData({
+          prayer: data.prayer,
+          arabic: data.prayerArabic,
+          time: data.prayerTime,
+        });
+      }
+    });
+
+    return () => {
+      foregroundSub.remove();
+      responseSub.remove();
+    };
   }, []);
 
   const onLayoutRootView = useCallback(async () => {
@@ -64,6 +123,18 @@ export default function App() {
         <Text style={styles.splashText}>نور الدين</Text>
         <Text style={styles.splashSub}>✦ جارٍ التحميل ✦</Text>
       </View>
+    );
+  }
+
+  // Prayer call screen overlays everything
+  if (callData) {
+    return (
+      <PrayerCallScreen
+        prayerName={callData.prayer}
+        prayerArabic={callData.arabic}
+        prayerTime={callData.time}
+        onDismiss={() => setCallData(null)}
+      />
     );
   }
 

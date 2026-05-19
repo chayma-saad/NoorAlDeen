@@ -38,9 +38,21 @@ export const fetchPrayerTimes = async (
     const year = today.getFullYear();
 
     const url = `${BASE_URL}/timings/${day}-${month}-${year}?latitude=${latitude}&longitude=${longitude}&method=5&school=1`;
-    const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    if (!response.ok) throw new Error('Network response was not ok');
-    const json = await response.json();
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    let json: { data: AladhanResponse };
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!response.ok) throw new Error('Network response was not ok');
+      json = await response.json();
+    } catch (e) {
+      clearTimeout(timeoutId);
+      throw e;
+    }
+
     return json.data as AladhanResponse;
   } catch (error) {
     console.warn('Prayer times fetch failed:', error);
@@ -70,10 +82,9 @@ export const fetchMonthCalendar = async (
   longitude: number,
   month: number,
   year: number,
-  hijri = false
+  _hijri = false
 ): Promise<AladhanResponse[]> => {
   try {
-    const endpoint = hijri ? 'calendarByCity' : 'calendar';
     const url = `${BASE_URL}/calendar/${year}/${month}?latitude=${latitude}&longitude=${longitude}&method=5`;
     const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!response.ok) throw new Error('Calendar fetch failed');

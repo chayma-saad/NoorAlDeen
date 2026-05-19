@@ -1,401 +1,435 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  Dimensions,
-  Platform,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  Animated, Dimensions, TextInput, Platform, Modal,
 } from 'react-native';
-import Svg, { Path, G, Rect, Text as SvgText, Circle, Defs, ClipPath } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
 import { toArabicNum } from '../utils/helpers';
-import { getQuranJuz, cycleJuzState } from '../services/storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { width: SCREEN_W } = Dimensions.get('window');
-const HEART_W = SCREEN_W - 32;
-const HEART_H = HEART_W * 1.1;
+const { width: SW } = Dimensions.get('window');
+const STATE_KEY = 'quran_map_v2';
 
 const SURAHS = [
-  { n: 1, ar: 'الفاتحة', juz: 1 }, { n: 2, ar: 'البقرة', juz: 1 },
-  { n: 3, ar: 'آل عمران', juz: 3 }, { n: 4, ar: 'النساء', juz: 4 },
-  { n: 5, ar: 'المائدة', juz: 6 }, { n: 6, ar: 'الأنعام', juz: 7 },
-  { n: 7, ar: 'الأعراف', juz: 8 }, { n: 8, ar: 'الأنفال', juz: 9 },
-  { n: 9, ar: 'التوبة', juz: 10 }, { n: 10, ar: 'يونس', juz: 11 },
-  { n: 11, ar: 'هود', juz: 11 }, { n: 12, ar: 'يوسف', juz: 12 },
-  { n: 13, ar: 'الرعد', juz: 13 }, { n: 14, ar: 'إبراهيم', juz: 13 },
-  { n: 15, ar: 'الحجر', juz: 14 }, { n: 16, ar: 'النحل', juz: 14 },
-  { n: 17, ar: 'الإسراء', juz: 15 }, { n: 18, ar: 'الكهف', juz: 15 },
-  { n: 19, ar: 'مريم', juz: 16 }, { n: 20, ar: 'طه', juz: 16 },
-  { n: 21, ar: 'الأنبياء', juz: 17 }, { n: 22, ar: 'الحج', juz: 17 },
-  { n: 23, ar: 'المؤمنون', juz: 18 }, { n: 24, ar: 'النور', juz: 18 },
-  { n: 25, ar: 'الفرقان', juz: 18 }, { n: 26, ar: 'الشعراء', juz: 19 },
-  { n: 27, ar: 'النمل', juz: 19 }, { n: 28, ar: 'القصص', juz: 20 },
-  { n: 29, ar: 'العنكبوت', juz: 20 }, { n: 30, ar: 'الروم', juz: 21 },
-  { n: 31, ar: 'لقمان', juz: 21 }, { n: 32, ar: 'السجدة', juz: 21 },
-  { n: 33, ar: 'الأحزاب', juz: 21 }, { n: 34, ar: 'سبأ', juz: 22 },
-  { n: 35, ar: 'فاطر', juz: 22 }, { n: 36, ar: 'يس', juz: 22 },
-  { n: 37, ar: 'الصافات', juz: 23 }, { n: 38, ar: 'ص', juz: 23 },
-  { n: 39, ar: 'الزمر', juz: 23 }, { n: 40, ar: 'غافر', juz: 24 },
-  { n: 41, ar: 'فصلت', juz: 24 }, { n: 42, ar: 'الشورى', juz: 25 },
-  { n: 43, ar: 'الزخرف', juz: 25 }, { n: 44, ar: 'الدخان', juz: 25 },
-  { n: 45, ar: 'الجاثية', juz: 25 }, { n: 46, ar: 'الأحقاف', juz: 26 },
-  { n: 47, ar: 'محمد', juz: 26 }, { n: 48, ar: 'الفتح', juz: 26 },
-  { n: 49, ar: 'الحجرات', juz: 26 }, { n: 50, ar: 'ق', juz: 26 },
-  { n: 51, ar: 'الذاريات', juz: 26 }, { n: 52, ar: 'الطور', juz: 27 },
-  { n: 53, ar: 'النجم', juz: 27 }, { n: 54, ar: 'القمر', juz: 27 },
-  { n: 55, ar: 'الرحمن', juz: 27 }, { n: 56, ar: 'الواقعة', juz: 27 },
-  { n: 57, ar: 'الحديد', juz: 27 }, { n: 58, ar: 'المجادلة', juz: 28 },
-  { n: 59, ar: 'الحشر', juz: 28 }, { n: 60, ar: 'الممتحنة', juz: 28 },
-  { n: 61, ar: 'الصف', juz: 28 }, { n: 62, ar: 'الجمعة', juz: 28 },
-  { n: 63, ar: 'المنافقون', juz: 28 }, { n: 64, ar: 'التغابن', juz: 28 },
-  { n: 65, ar: 'الطلاق', juz: 28 }, { n: 66, ar: 'التحريم', juz: 28 },
-  { n: 67, ar: 'الملك', juz: 29 }, { n: 68, ar: 'القلم', juz: 29 },
-  { n: 69, ar: 'الحاقة', juz: 29 }, { n: 70, ar: 'المعارج', juz: 29 },
-  { n: 71, ar: 'نوح', juz: 29 }, { n: 72, ar: 'الجن', juz: 29 },
-  { n: 73, ar: 'المزمل', juz: 29 }, { n: 74, ar: 'المدثر', juz: 29 },
-  { n: 75, ar: 'القيامة', juz: 29 }, { n: 76, ar: 'الإنسان', juz: 29 },
-  { n: 77, ar: 'المرسلات', juz: 29 }, { n: 78, ar: 'النبأ', juz: 30 },
-  { n: 79, ar: 'النازعات', juz: 30 }, { n: 80, ar: 'عبس', juz: 30 },
-  { n: 81, ar: 'التكوير', juz: 30 }, { n: 82, ar: 'الانفطار', juz: 30 },
-  { n: 83, ar: 'المطففين', juz: 30 }, { n: 84, ar: 'الانشقاق', juz: 30 },
-  { n: 85, ar: 'البروج', juz: 30 }, { n: 86, ar: 'الطارق', juz: 30 },
-  { n: 87, ar: 'الأعلى', juz: 30 }, { n: 88, ar: 'الغاشية', juz: 30 },
-  { n: 89, ar: 'الفجر', juz: 30 }, { n: 90, ar: 'البلد', juz: 30 },
-  { n: 91, ar: 'الشمس', juz: 30 }, { n: 92, ar: 'الليل', juz: 30 },
-  { n: 93, ar: 'الضحى', juz: 30 }, { n: 94, ar: 'الشرح', juz: 30 },
-  { n: 95, ar: 'التين', juz: 30 }, { n: 96, ar: 'العلق', juz: 30 },
-  { n: 97, ar: 'القدر', juz: 30 }, { n: 98, ar: 'البينة', juz: 30 },
-  { n: 99, ar: 'الزلزلة', juz: 30 }, { n: 100, ar: 'العاديات', juz: 30 },
-  { n: 101, ar: 'القارعة', juz: 30 }, { n: 102, ar: 'التكاثر', juz: 30 },
-  { n: 103, ar: 'العصر', juz: 30 }, { n: 104, ar: 'الهمزة', juz: 30 },
-  { n: 105, ar: 'الفيل', juz: 30 }, { n: 106, ar: 'قريش', juz: 30 },
-  { n: 107, ar: 'الماعون', juz: 30 }, { n: 108, ar: 'الكوثر', juz: 30 },
-  { n: 109, ar: 'الكافرون', juz: 30 }, { n: 110, ar: 'النصر', juz: 30 },
-  { n: 111, ar: 'المسد', juz: 30 }, { n: 112, ar: 'الإخلاص', juz: 30 },
-  { n: 113, ar: 'الفلق', juz: 30 }, { n: 114, ar: 'الناس', juz: 30 },
+  {n:1,ar:'الفاتحة',pages:1,juz:1},{n:2,ar:'البقرة',pages:49,juz:1},
+  {n:3,ar:'آل عمران',pages:20,juz:3},{n:4,ar:'النساء',pages:24,juz:4},
+  {n:5,ar:'المائدة',pages:17,juz:6},{n:6,ar:'الأنعام',pages:21,juz:7},
+  {n:7,ar:'الأعراف',pages:25,juz:8},{n:8,ar:'الأنفال',pages:9,juz:9},
+  {n:9,ar:'التوبة',pages:21,juz:10},{n:10,ar:'يونس',pages:11,juz:11},
+  {n:11,ar:'هود',pages:11,juz:11},{n:12,ar:'يوسف',pages:12,juz:12},
+  {n:13,ar:'الرعد',pages:6,juz:13},{n:14,ar:'إبراهيم',pages:7,juz:13},
+  {n:15,ar:'الحجر',pages:6,juz:14},{n:16,ar:'النحل',pages:13,juz:14},
+  {n:17,ar:'الإسراء',pages:12,juz:15},{n:18,ar:'الكهف',pages:12,juz:15},
+  {n:19,ar:'مريم',pages:7,juz:16},{n:20,ar:'طه',pages:9,juz:16},
+  {n:21,ar:'الأنبياء',pages:11,juz:17},{n:22,ar:'الحج',pages:9,juz:17},
+  {n:23,ar:'المؤمنون',pages:9,juz:18},{n:24,ar:'النور',pages:9,juz:18},
+  {n:25,ar:'الفرقان',pages:7,juz:18},{n:26,ar:'الشعراء',pages:11,juz:19},
+  {n:27,ar:'النمل',pages:9,juz:19},{n:28,ar:'القصص',pages:10,juz:20},
+  {n:29,ar:'العنكبوت',pages:7,juz:20},{n:30,ar:'الروم',pages:6,juz:21},
+  {n:31,ar:'لقمان',pages:4,juz:21},{n:32,ar:'السجدة',pages:3,juz:21},
+  {n:33,ar:'الأحزاب',pages:9,juz:21},{n:34,ar:'سبأ',pages:6,juz:22},
+  {n:35,ar:'فاطر',pages:5,juz:22},{n:36,ar:'يس',pages:5,juz:22},
+  {n:37,ar:'الصافات',pages:7,juz:23},{n:38,ar:'ص',pages:5,juz:23},
+  {n:39,ar:'الزمر',pages:8,juz:23},{n:40,ar:'غافر',pages:9,juz:24},
+  {n:41,ar:'فصلت',pages:7,juz:24},{n:42,ar:'الشورى',pages:7,juz:25},
+  {n:43,ar:'الزخرف',pages:7,juz:25},{n:44,ar:'الدخان',pages:3,juz:25},
+  {n:45,ar:'الجاثية',pages:4,juz:25},{n:46,ar:'الأحقاف',pages:5,juz:26},
+  {n:47,ar:'محمد',pages:4,juz:26},{n:48,ar:'الفتح',pages:4,juz:26},
+  {n:49,ar:'الحجرات',pages:3,juz:26},{n:50,ar:'ق',pages:3,juz:26},
+  {n:51,ar:'الذاريات',pages:3,juz:26},{n:52,ar:'الطور',pages:3,juz:27},
+  {n:53,ar:'النجم',pages:3,juz:27},{n:54,ar:'القمر',pages:3,juz:27},
+  {n:55,ar:'الرحمن',pages:3,juz:27},{n:56,ar:'الواقعة',pages:4,juz:27},
+  {n:57,ar:'الحديد',pages:5,juz:27},{n:58,ar:'المجادلة',pages:4,juz:28},
+  {n:59,ar:'الحشر',pages:4,juz:28},{n:60,ar:'الممتحنة',pages:3,juz:28},
+  {n:61,ar:'الصف',pages:2,juz:28},{n:62,ar:'الجمعة',pages:2,juz:28},
+  {n:63,ar:'المنافقون',pages:2,juz:28},{n:64,ar:'التغابن',pages:2,juz:28},
+  {n:65,ar:'الطلاق',pages:3,juz:28},{n:66,ar:'التحريم',pages:2,juz:28},
+  {n:67,ar:'الملك',pages:3,juz:29},{n:68,ar:'القلم',pages:3,juz:29},
+  {n:69,ar:'الحاقة',pages:2,juz:29},{n:70,ar:'المعارج',pages:2,juz:29},
+  {n:71,ar:'نوح',pages:2,juz:29},{n:72,ar:'الجن',pages:2,juz:29},
+  {n:73,ar:'المزمل',pages:2,juz:29},{n:74,ar:'المدثر',pages:2,juz:29},
+  {n:75,ar:'القيامة',pages:2,juz:29},{n:76,ar:'الإنسان',pages:2,juz:29},
+  {n:77,ar:'المرسلات',pages:2,juz:29},{n:78,ar:'النبأ',pages:2,juz:30},
+  {n:79,ar:'النازعات',pages:2,juz:30},{n:80,ar:'عبس',pages:1,juz:30},
+  {n:81,ar:'التكوير',pages:1,juz:30},{n:82,ar:'الانفطار',pages:1,juz:30},
+  {n:83,ar:'المطففين',pages:2,juz:30},{n:84,ar:'الانشقاق',pages:1,juz:30},
+  {n:85,ar:'البروج',pages:1,juz:30},{n:86,ar:'الطارق',pages:1,juz:30},
+  {n:87,ar:'الأعلى',pages:1,juz:30},{n:88,ar:'الغاشية',pages:1,juz:30},
+  {n:89,ar:'الفجر',pages:2,juz:30},{n:90,ar:'البلد',pages:1,juz:30},
+  {n:91,ar:'الشمس',pages:1,juz:30},{n:92,ar:'الليل',pages:1,juz:30},
+  {n:93,ar:'الضحى',pages:1,juz:30},{n:94,ar:'الشرح',pages:1,juz:30},
+  {n:95,ar:'التين',pages:1,juz:30},{n:96,ar:'العلق',pages:1,juz:30},
+  {n:97,ar:'القدر',pages:1,juz:30},{n:98,ar:'البينة',pages:2,juz:30},
+  {n:99,ar:'الزلزلة',pages:1,juz:30},{n:100,ar:'العاديات',pages:1,juz:30},
+  {n:101,ar:'القارعة',pages:1,juz:30},{n:102,ar:'التكاثر',pages:1,juz:30},
+  {n:103,ar:'العصر',pages:1,juz:30},{n:104,ar:'الهمزة',pages:1,juz:30},
+  {n:105,ar:'الفيل',pages:1,juz:30},{n:106,ar:'قريش',pages:1,juz:30},
+  {n:107,ar:'الماعون',pages:1,juz:30},{n:108,ar:'الكوثر',pages:1,juz:30},
+  {n:109,ar:'الكافرون',pages:1,juz:30},{n:110,ar:'النصر',pages:1,juz:30},
+  {n:111,ar:'المسد',pages:1,juz:30},{n:112,ar:'الإخلاص',pages:1,juz:30},
+  {n:113,ar:'الفلق',pages:1,juz:30},{n:114,ar:'الناس',pages:1,juz:30},
 ];
 
-type SurahState = 'none' | 'learning' | 'done';
-const HEART_STATE_KEY = 'heart_surah_states';
+const TOTAL_PAGES = 604;
+type ProgressMap = Record<number, number>; // surahN -> donePages
 
-// Pre-computed heart cell positions (114 cells inside heart shape)
-function buildHeartPositions(w: number, h: number) {
-  const cx = w / 2;
-  const cy = h * 0.48;
-  const rx = w * 0.44;
-  const ry = h * 0.42;
-  const positions: { x: number; y: number; width: number; height: number }[] = [];
-
-  const cols = 13;
-  const rows = 11;
-  const cw = w / (cols + 2);
-  const ch = h / (rows + 2);
-
-  function inHeart(px: number, py: number) {
-    const tx = (px - cx) / rx;
-    const ty = (py - cy) / ry;
-    const v = tx * tx + ty * ty - 1;
-    return v * v * v - tx * tx * ty * ty * ty < 0.08;
-  }
-
-  for (let row = 0; row <= rows; row++) {
-    for (let col = 0; col <= cols; col++) {
-      const x = (col + 0.5) * (w / (cols + 1));
-      const y = (row + 0.5) * (h / (rows + 1)) + h * 0.05;
-      if (inHeart(x, y)) {
-        positions.push({ x: x - cw / 2 + 1, y: y - ch / 2 + 1, width: cw - 2, height: ch - 2 });
-        if (positions.length >= 114) return positions;
-      }
-    }
-  }
-  return positions;
+function tileColor(ratio: number) {
+  if (ratio === 0)  return 'rgba(255,255,255,0.05)';
+  if (ratio < 0.34) return 'rgba(180,120,20,0.28)';
+  if (ratio < 0.67) return 'rgba(201,146,46,0.55)';
+  if (ratio < 1)    return 'rgba(201,146,46,0.82)';
+  return COLORS.green3;
 }
 
-export default function HeartMapScreen() {
-  const [surahStates, setSurahStates] = useState<Record<number, SurahState>>({});
-  const [selected, setSelected] = useState<number | null>(null);
-  const [positions, setPositions] = useState<any[]>([]);
+export default function QuranMapScreen() {
+  const [progress, setProgress] = useState<ProgressMap>({});
+  const [selected, setSelected] = useState<number|null>(null);
+  const [inputVal, setInputVal] = useState('');
+  const [modal, setModal]       = useState(false);
+  const [filter, setFilter]     = useState<'all'|'done'|'partial'|'none'>('all');
   const celebAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    loadStates();
-    setPositions(buildHeartPositions(HEART_W, HEART_H));
+    AsyncStorage.getItem(STATE_KEY).then(v => { if (v) setProgress(JSON.parse(v)); }).catch(() => {});
   }, []);
 
-  const loadStates = async () => {
-    try {
-      const val = await AsyncStorage.getItem(HEART_STATE_KEY);
-      if (val) setSurahStates(JSON.parse(val));
-    } catch {}
-  };
+  const save = (p: ProgressMap) => AsyncStorage.setItem(STATE_KEY, JSON.stringify(p)).catch(() => {});
 
-  const saveStates = async (states: Record<number, SurahState>) => {
-    try {
-      await AsyncStorage.setItem(HEART_STATE_KEY, JSON.stringify(states));
-    } catch {}
-  };
+  const totalDone = SURAHS.reduce((a, s) => a + Math.min(progress[s.n] ?? 0, s.pages), 0);
+  const surahsDone = SURAHS.filter(s => (progress[s.n] ?? 0) >= s.pages).length;
+  const juzDone    = totalDone / (TOTAL_PAGES / 30);
+  const hizbDone   = totalDone / (TOTAL_PAGES / 60);
+  const pct        = Math.round((totalDone / TOTAL_PAGES) * 100);
 
-  const handleCellPress = (n: number) => {
-    if (Platform.OS !== 'web') {
-      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
-    }
+  const openSurah = (n: number) => {
+    if (Platform.OS !== 'web') try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     setSelected(n);
+    setInputVal(String(progress[n] ?? 0));
+    setModal(true);
   };
 
-  const markSurah = async (n: number, state: SurahState) => {
-    const newStates = { ...surahStates };
-    if (state === 'none') delete newStates[n];
-    else newStates[n] = state;
-    setSurahStates(newStates);
-    await saveStates(newStates);
-
-    if (state === 'done') {
+  const confirm = async () => {
+    if (selected === null) return;
+    const s = SURAHS.find(x => x.n === selected)!;
+    const v = Math.max(0, Math.min(parseInt(inputVal) || 0, s.pages));
+    const np = { ...progress, [selected]: v };
+    setProgress(np);
+    save(np);
+    setModal(false);
+    if (v >= s.pages) {
+      if (Platform.OS !== 'web') try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
       Animated.sequence([
-        Animated.timing(celebAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.timing(celebAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+        Animated.timing(celebAnim, { toValue: 1, duration: 350, useNativeDriver: true }),
+        Animated.timing(celebAnim, { toValue: 0, duration: 550, useNativeDriver: true }),
       ]).start();
-      if (Platform.OS !== 'web') {
-        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
-      }
     }
   };
 
-  const getCellColor = (n: number) => {
-    const s = surahStates[n];
-    if (s === 'done') return COLORS.green3;
-    if (s === 'learning') return 'rgba(201,146,46,0.55)';
-    return 'rgba(255,255,255,0.07)';
-  };
+  const visible = SURAHS.filter(s => {
+    const dp = progress[s.n] ?? 0;
+    if (filter === 'done')    return dp >= s.pages;
+    if (filter === 'partial') return dp > 0 && dp < s.pages;
+    if (filter === 'none')    return dp === 0;
+    return true;
+  });
 
-  const getCellStroke = (n: number) => {
-    const s = surahStates[n];
-    if (s === 'done') return COLORS.green;
-    if (s === 'learning') return COLORS.gold;
-    return 'rgba(201,146,46,0.18)';
-  };
+  const sel = selected ? SURAHS.find(x => x.n === selected) : null;
+  const selPages = selected ? (progress[selected] ?? 0) : 0;
 
-  const doneCount = Object.values(surahStates).filter((s) => s === 'done').length;
-  const learningCount = Object.values(surahStates).filter((s) => s === 'learning').length;
-  const pct = Math.round((doneCount / 114) * 100);
-  const selectedSurah = selected ? SURAHS[selected - 1] : null;
-  const selectedState = selected ? surahStates[selected] || 'none' : 'none';
+  const COLS = 5;
+  const GAP  = 4;
+  const TILE  = (SW - SPACING.lg * 2 - GAP * (COLS - 1)) / COLS;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
-      <Text style={styles.title}>قلب القرآن الكريم</Text>
-      <Text style={styles.sub}>اضغط على كل سورة لتلوينها عند إتمامها 🌿</Text>
+    <View style={s.root}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
 
-      {/* Stats Row */}
-      <View style={styles.statsRow}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNum}>{toArabicNum(doneCount)}</Text>
-          <Text style={styles.statLabel}>مكتملة</Text>
-        </View>
-        <View style={[styles.statBox, { borderColor: COLORS.gold }]}>
-          <Text style={[styles.statNum, { color: COLORS.gold }]}>{toArabicNum(pct)}٪</Text>
-          <Text style={styles.statLabel}>التقدم</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={[styles.statNum, { color: COLORS.goldLight }]}>{toArabicNum(learningCount)}</Text>
-          <Text style={styles.statLabel}>في التعلم</Text>
-        </View>
-      </View>
+        {/* TITLE */}
+        <Text style={s.title}>خريطة القرآن الكريم</Text>
 
-      {/* Progress Bar */}
-      <View style={styles.progOuter}>
-        <Animated.View style={[styles.progInner, {
-          width: `${pct}%`,
-          opacity: celebAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0.6, 1] }),
-        }]} />
-      </View>
-
-      {/* Legend */}
-      <View style={styles.legend}>
-        {[
-          { color: COLORS.green3, label: 'مكتملة' },
-          { color: 'rgba(201,146,46,0.55)', label: 'في التعلم' },
-          { color: 'rgba(255,255,255,0.1)', label: 'لم تبدأ' },
-        ].map((leg) => (
-          <View key={leg.label} style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: leg.color }]} />
-            <Text style={styles.legendText}>{leg.label}</Text>
+        {/* 3D BOOK */}
+        <View style={s.bookArea}>
+          <View style={[s.page, { right: SW*0.22+4, transform:[{rotate:'5deg'}], backgroundColor:'#0C1E32' }]} />
+          <View style={[s.page, { right: SW*0.22+2, transform:[{rotate:'2.5deg'}], backgroundColor:'#112840' }]} />
+          <View style={s.cover}>
+            <View style={s.coverInner}>
+              <Text style={s.bism}>﷽</Text>
+              <Text style={s.coverTitle}>القرآن الكريم</Text>
+              <View style={s.coverLine} />
+              <Text style={s.coverPct}>{toArabicNum(pct)}٪</Text>
+              <Text style={s.coverSub}>{toArabicNum(totalDone)} / {toArabicNum(TOTAL_PAGES)} صفحة</Text>
+            </View>
           </View>
-        ))}
-      </View>
+          <View style={s.spine}>
+            <Text style={s.spineText}>القرآن</Text>
+          </View>
+        </View>
 
-      {/* Heart SVG */}
-      <View style={styles.heartWrap}>
-        <Svg width={HEART_W} height={HEART_H} viewBox={`0 0 ${HEART_W} ${HEART_H}`}>
-          <Defs>
-            <ClipPath id="heartClip">
-              <Path
-                d={`M${HEART_W / 2},${HEART_H * 0.88}
-                  C${HEART_W / 2},${HEART_H * 0.88} ${HEART_W * 0.08},${HEART_H * 0.62}
-                  ${HEART_W * 0.08},${HEART_H * 0.36}
-                  C${HEART_W * 0.08},${HEART_H * 0.18} ${HEART_W * 0.23},${HEART_H * 0.1}
-                  ${HEART_W * 0.36},${HEART_H * 0.1}
-                  C${HEART_W * 0.44},${HEART_H * 0.1} ${HEART_W * 0.49},${HEART_H * 0.16}
-                  ${HEART_W / 2},${HEART_H * 0.19}
-                  C${HEART_W * 0.51},${HEART_H * 0.16} ${HEART_W * 0.56},${HEART_H * 0.1}
-                  ${HEART_W * 0.64},${HEART_H * 0.1}
-                  C${HEART_W * 0.77},${HEART_H * 0.1} ${HEART_W * 0.92},${HEART_H * 0.18}
-                  ${HEART_W * 0.92},${HEART_H * 0.36}
-                  C${HEART_W * 0.92},${HEART_H * 0.62} ${HEART_W / 2},${HEART_H * 0.88}
-                  ${HEART_W / 2},${HEART_H * 0.88} Z`}
-              />
-            </ClipPath>
-          </Defs>
+        {/* STATS */}
+        <View style={s.statsRow}>
+          {[
+            { v: toArabicNum(surahsDone), label: 'سورة', color: COLORS.green3, pct: surahsDone/114 },
+            { v: juzDone.toFixed(1),       label: 'جزء / ٣٠', color: COLORS.gold, pct: juzDone/30 },
+            { v: hizbDone.toFixed(1),      label: 'حزب / ٦٠', color: COLORS.goldLight, pct: hizbDone/60 },
+          ].map((st) => (
+              <View key={st.label} style={s.statCard}>
+              <Text style={[s.statVal, { color: st.color }]}>{st.v}</Text>
+              <Text style={s.statLabel}>{st.label}</Text>
+              <View style={s.bar}><View style={[s.barFill, { width:`${Math.min(st.pct*100,100)}%`, backgroundColor:st.color }]} /></View>
+            </View>
+          ))}
+        </View>
 
-          {/* Heart background */}
-          <Path
-            d={`M${HEART_W / 2},${HEART_H * 0.88}
-              C${HEART_W / 2},${HEART_H * 0.88} ${HEART_W * 0.08},${HEART_H * 0.62}
-              ${HEART_W * 0.08},${HEART_H * 0.36}
-              C${HEART_W * 0.08},${HEART_H * 0.18} ${HEART_W * 0.23},${HEART_H * 0.1}
-              ${HEART_W * 0.36},${HEART_H * 0.1}
-              C${HEART_W * 0.44},${HEART_H * 0.1} ${HEART_W * 0.49},${HEART_H * 0.16}
-              ${HEART_W / 2},${HEART_H * 0.19}
-              C${HEART_W * 0.51},${HEART_H * 0.16} ${HEART_W * 0.56},${HEART_H * 0.1}
-              ${HEART_W * 0.64},${HEART_H * 0.1}
-              C${HEART_W * 0.77},${HEART_H * 0.1} ${HEART_W * 0.92},${HEART_H * 0.18}
-              ${HEART_W * 0.92},${HEART_H * 0.36}
-              C${HEART_W * 0.92},${HEART_H * 0.62} ${HEART_W / 2},${HEART_H * 0.88}
-              ${HEART_W / 2},${HEART_H * 0.88} Z`}
-            fill="rgba(13,27,42,0.98)"
-            stroke="rgba(201,146,46,0.35)"
-            strokeWidth="1.5"
-          />
-
-          {/* Surah cells */}
-          <G clipPath="url(#heartClip)">
-            {positions.slice(0, 114).map((pos, i) => {
-              const surah = SURAHS[i];
-              const isSelected = selected === surah.n;
-              const shortName = surah.ar.length > 5 ? surah.ar.slice(0, 4) : surah.ar;
+        {/* HIZB BAR */}
+        <View style={s.section}>
+          <Text style={s.secTitle}>الأحزاب الستون</Text>
+          <View style={s.hizbRow}>
+            {Array.from({ length: 60 }).map((_, i) => {
+              const fill = Math.min(Math.max(hizbDone - i, 0), 1);
               return (
-                <G key={surah.n} onPress={() => handleCellPress(surah.n)}>
-                  <Rect
-                    x={pos.x}
-                    y={pos.y}
-                    width={pos.width}
-                    height={pos.height}
-                    rx={3}
-                    fill={getCellColor(surah.n)}
-                    stroke={isSelected ? COLORS.goldLight : getCellStroke(surah.n)}
-                    strokeWidth={isSelected ? 1.5 : 0.5}
-                  />
-                  <SvgText
-                    x={pos.x + pos.width / 2}
-                    y={pos.y + pos.height / 2 + 3}
-                    textAnchor="middle"
-                    fontFamily="Cairo"
-                    fontSize={6.5}
-                    fill={surahStates[surah.n] === 'done' ? COLORS.deep : 'rgba(245,237,216,0.8)'}
-                  >
-                    {shortName}
-                  </SvgText>
-                </G>
+                <View key={i} style={s.hizbSeg}>
+                  <View style={[s.hizbFill, { height: `${fill * 100}%` }]} />
+                  {(i+1) % 10 === 0 && <Text style={s.hizbLbl}>{toArabicNum(i+1)}</Text>}
+                </View>
               );
             })}
-          </G>
-
-          {/* Bismillah */}
-          <SvgText
-            x={HEART_W / 2}
-            y={HEART_H * 0.06}
-            textAnchor="middle"
-            fontFamily="Amiri"
-            fontSize={12}
-            fill="rgba(201,146,46,0.6)"
-          >
-            بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-          </SvgText>
-        </Svg>
-      </View>
-
-      {/* Selected Surah Detail */}
-      {selectedSurah ? (
-        <View style={styles.detailCard}>
-          <View style={styles.detailHeader}>
-            <Text style={styles.detailTitle}>سورة {selectedSurah.ar}</Text>
-            <Text style={styles.detailMeta}>
-              رقم {toArabicNum(selectedSurah.n)} · الجزء {toArabicNum(selectedSurah.juz)}
-            </Text>
-          </View>
-          <Text style={styles.detailStatus}>
-            الحالة:{' '}
-            {selectedState === 'done' ? '✅ مكتملة' : selectedState === 'learning' ? '🔄 في التعلم' : '⬜ لم تبدأ'}
-          </Text>
-          <View style={styles.actionBtns}>
-            <TouchableOpacity
-              style={[styles.actionBtn, selectedState === 'done' && styles.actionBtnActive]}
-              onPress={() => markSurah(selectedSurah.n, 'done')}
-            >
-              <Text style={styles.actionBtnText}>✅ أتممتها</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.actionBtnAmber]}
-              onPress={() => markSurah(selectedSurah.n, 'learning')}
-            >
-              <Text style={styles.actionBtnText}>🔄 في التعلم</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.actionBtnReset]}
-              onPress={() => markSurah(selectedSurah.n, 'none')}
-            >
-              <Text style={[styles.actionBtnText, { color: COLORS.muted }]}>إعادة</Text>
-            </TouchableOpacity>
           </View>
         </View>
-      ) : (
-        <View style={styles.hintCard}>
-          <Text style={styles.hintText}>اضغط على أي خلية في القلب لعرض تفاصيل السورة</Text>
-        </View>
-      )}
 
-      {/* Motivational quote */}
-      <View style={styles.quoteCard}>
-        <Text style={styles.quoteArabic}>«وَكَانَ فَضْلُ اللَّهِ عَلَيْكَ عَظِيمًا»</Text>
-        <Text style={styles.quoteRef}>النساء: ١١٣</Text>
-      </View>
-    </ScrollView>
+        {/* LEGEND */}
+        <View style={s.legend}>
+          {[
+            {c:'rgba(255,255,255,0.08)',l:'لم تبدأ'},
+            {c:'rgba(180,120,20,0.4)', l:'بداية'},
+            {c:'rgba(201,146,46,0.7)', l:'جارية'},
+            {c:COLORS.green3,          l:'مكتملة'},
+          ].map(lg => (
+            <View key={lg.l} style={s.legItem}>
+              <View style={[s.legSwatch, { backgroundColor: lg.c }]} />
+              <Text style={s.legLabel}>{lg.l}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* FILTERS */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: SPACING.lg, gap: 8, paddingBottom: 12 }}>
+          {([
+            {k:'all',    lbl:`الكل · ${toArabicNum(114)}`},
+            {k:'done',   lbl:`✅ مكتملة · ${toArabicNum(surahsDone)}`},
+            {k:'partial',lbl:'🔄 جارية'},
+            {k:'none',   lbl:'⬜ لم تبدأ'},
+          ] as const).map(f => (
+            <TouchableOpacity key={f.k}
+              style={[s.pill, filter===f.k && s.pillOn]}
+              onPress={() => setFilter(f.k)}>
+              <Text style={[s.pillTxt, filter===f.k && s.pillTxtOn]}>{f.lbl}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* GRID */}
+        <View style={{ flexDirection:'row', flexWrap:'wrap', paddingHorizontal: SPACING.lg, gap: GAP }}>
+          {visible.map(sr => {
+            const dp    = progress[sr.n] ?? 0;
+            const ratio = sr.pages > 0 ? dp / sr.pages : 0;
+            const done  = dp >= sr.pages;
+            return (
+              <TouchableOpacity
+                key={sr.n}
+                style={[s.tile, { width: TILE, minHeight: TILE * 1.4, backgroundColor: tileColor(ratio) }]}
+                onPress={() => openSurah(sr.n)}
+                activeOpacity={0.78}>
+                {/* 3D sheen */}
+                <View style={s.tileSheen} />
+                {/* Number */}
+                <View style={[s.badge, done && s.badgeDone]}>
+                  <Text style={s.badgeTxt}>{toArabicNum(sr.n)}</Text>
+                </View>
+                {/* Name - always visible */}
+                <Text style={[s.tileName, { color: ratio >= 1 ? COLORS.deep : COLORS.cream }]}
+                  numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
+                  {sr.ar}
+                </Text>
+                {/* Pages count */}
+                <Text style={s.tilePageCount}>{toArabicNum(sr.pages)}</Text>
+                {/* Mini progress bar */}
+                <View style={s.tileBar}>
+                  <View style={[s.tileBarFill, {
+                    width: `${ratio * 100}%`,
+                    backgroundColor: done ? COLORS.green : COLORS.goldLight,
+                  }]} />
+                </View>
+                {done && <Text style={s.doneCheck}>✓</Text>}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+      </ScrollView>
+
+      {/* MODAL */}
+      <Modal visible={modal} transparent animationType="slide" onRequestClose={() => setModal(false)}>
+        <View style={s.overlay}>
+          <View style={s.modalCard}>
+            {sel && <>
+              <View style={s.modalHandle} />
+              <Text style={s.modalTitle}>سورة {sel.ar}</Text>
+              <Text style={s.modalMeta}>
+                {toArabicNum(sel.pages)} صفحة · الجزء {toArabicNum(sel.juz)}
+              </Text>
+              {/* Progress bar */}
+              <View style={s.mProgOuter}>
+                <View style={[s.mProgFill, { width: `${Math.min((selPages/sel.pages)*100,100)}%` }]} />
+              </View>
+              <Text style={s.mProgTxt}>{toArabicNum(selPages)} / {toArabicNum(sel.pages)} صفحة مكتملة</Text>
+              {/* Quick picks */}
+              <View style={s.quickRow}>
+                {[0, Math.round(sel.pages*0.25), Math.round(sel.pages*0.5), Math.round(sel.pages*0.75), sel.pages]
+                 .filter((v, idx, arr) => arr.indexOf(v) === idx)  // deduplicate
+                 .map((v, idx) =>  (
+                  <TouchableOpacity key={v} style={[s.qBtn, inputVal===String(v) && s.qBtnOn]}
+                    onPress={() => setInputVal(String(v))}>
+                    <Text style={[s.qBtnTxt, inputVal===String(v) && s.qBtnTxtOn]}>
+                      {v === 0 ? '٠' : v === sel.pages ? 'كاملة ✓' : toArabicNum(v)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {/* Input */}
+              <View style={s.inputWrap}>
+                <Text style={s.inputLabel}>أدخل عدد الصفحات:</Text>
+                <TextInput
+                  style={s.input}
+                  value={inputVal}
+                  onChangeText={setInputVal}
+                  keyboardType="numeric"
+                  placeholder="0"
+                  placeholderTextColor={COLORS.muted}
+                  maxLength={3}
+                  selectTextOnFocus
+                />
+              </View>
+              <View style={s.mActions}>
+                <TouchableOpacity style={s.cancelBtn} onPress={() => setModal(false)}>
+                  <Text style={s.cancelTxt}>إلغاء</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.saveBtn} onPress={confirm}>
+                  <Text style={s.saveTxt}>حفظ ✓</Text>
+                </TouchableOpacity>
+              </View>
+            </>}
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.deep },
-  title: { fontFamily: FONTS.amiriBold, fontSize: 24, color: COLORS.goldLight, textAlign: 'center', paddingTop: SPACING.lg, marginBottom: 4 },
-  sub: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted, textAlign: 'center', marginBottom: SPACING.md },
-  statsRow: { flexDirection: 'row', marginHorizontal: SPACING.lg, gap: SPACING.sm, marginBottom: SPACING.sm },
-  statBox: { flex: 1, backgroundColor: COLORS.deep2, borderRadius: RADIUS.md, padding: SPACING.md, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(201,146,46,0.15)' },
-  statNum: { fontFamily: FONTS.cairoBold, fontSize: 22, color: COLORS.green3 },
-  statLabel: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted, marginTop: 2 },
-  progOuter: { marginHorizontal: SPACING.lg, height: 5, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 3, overflow: 'hidden', marginBottom: SPACING.sm },
-  progInner: { height: 5, backgroundColor: COLORS.green3, borderRadius: 3 },
-  legend: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginBottom: SPACING.sm },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendText: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted },
-  heartWrap: { marginHorizontal: SPACING.md, marginBottom: SPACING.md, alignItems: 'center' },
-  detailCard: { marginHorizontal: SPACING.lg, backgroundColor: COLORS.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.2)', marginBottom: SPACING.md },
-  detailHeader: { marginBottom: SPACING.sm },
-  detailTitle: { fontFamily: FONTS.amiriBold, fontSize: 22, color: COLORS.goldLight },
-  detailMeta: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted, marginTop: 3 },
-  detailStatus: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.cream3, marginBottom: SPACING.md },
-  actionBtns: { flexDirection: 'row', gap: SPACING.sm, flexWrap: 'wrap' },
-  actionBtn: { backgroundColor: COLORS.green2, borderRadius: RADIUS.full, paddingHorizontal: 16, paddingVertical: 9 },
-  actionBtnActive: { backgroundColor: COLORS.green, borderWidth: 1.5, borderColor: COLORS.green3 },
-  actionBtnAmber: { backgroundColor: 'rgba(201,146,46,0.25)' },
-  actionBtnReset: { backgroundColor: 'rgba(255,255,255,0.06)' },
-  actionBtnText: { fontFamily: FONTS.cairoBold, fontSize: 13, color: 'white' },
-  hintCard: { marginHorizontal: SPACING.lg, backgroundColor: COLORS.deep2, borderRadius: RADIUS.md, padding: SPACING.lg, alignItems: 'center', marginBottom: SPACING.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  hintText: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.muted, textAlign: 'center' },
-  quoteCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.lg, backgroundColor: 'rgba(201,146,46,0.05)', borderRightWidth: 3, borderRightColor: COLORS.gold, borderRadius: RADIUS.sm, padding: SPACING.lg },
-  quoteArabic: { fontFamily: FONTS.amiriBold, fontSize: 18, color: COLORS.cream, lineHeight: 32 },
-  quoteRef: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted, marginTop: 4 },
+const s = StyleSheet.create({
+  root:  { flex:1, backgroundColor: COLORS.deep },
+  title: { fontFamily: FONTS.amiriBold, fontSize: 22, color: COLORS.goldLight,
+           textAlign:'center', paddingTop: SPACING.lg, marginBottom: SPACING.lg },
+
+  // Book
+  bookArea: { height:185, alignItems:'center', marginBottom: 20, position:'relative' },
+  page: { position:'absolute', width: SW*0.55, height:158, borderRadius:6, bottom:0 },
+  cover:{ position:'absolute', right: SW*0.22, bottom:0, width: SW*0.55, height:162,
+          backgroundColor:'#0A1E35', borderRadius:8,
+          borderWidth:1.5, borderColor: COLORS.gold,
+          shadowColor:'#000', shadowOffset:{width:-3,height:5}, shadowOpacity:0.5, shadowRadius:8, elevation:10,
+          overflow:'hidden' },
+  coverInner:{ flex:1, margin:6, borderWidth:1, borderColor:'rgba(201,146,46,0.25)',
+               borderRadius:4, alignItems:'center', justifyContent:'center', gap:3 },
+  bism:      { fontFamily: FONTS.amiri, fontSize:12, color: COLORS.gold, opacity:0.8 },
+  coverTitle:{ fontFamily: FONTS.amiriBold, fontSize:15, color: COLORS.goldLight },
+  coverLine: { width:55, height:1, backgroundColor: COLORS.gold, opacity:0.35, marginVertical:3 },
+  coverPct:  { fontFamily: FONTS.cairoBold, fontSize:28, color: COLORS.gold },
+  coverSub:  { fontFamily: FONTS.cairo, fontSize:10, color: COLORS.muted },
+  spine:     { position:'absolute', right: SW*0.22-20, bottom:0, width:20, height:162,
+               backgroundColor:'#040E1C', borderRadius:4,
+               borderWidth:1, borderColor:'rgba(201,146,46,0.35)',
+               alignItems:'center', justifyContent:'center' },
+  spineText: { fontFamily: FONTS.amiri, fontSize:8, color: COLORS.gold, opacity:0.6,
+               transform:[{rotate:'-90deg'}], width:90, textAlign:'center' },
+
+  // Stats
+  statsRow: { flexDirection:'row', marginHorizontal: SPACING.lg, gap:8, marginBottom:14 },
+  statCard: { flex:1, backgroundColor: COLORS.deep2, borderRadius: RADIUS.md,
+              padding: SPACING.md, borderWidth:1, borderColor:'rgba(201,146,46,0.12)' },
+  statVal:  { fontFamily: FONTS.cairoBold, fontSize:19, textAlign:'center' },
+  statLabel:{ fontFamily: FONTS.cairo, fontSize:10, color: COLORS.muted, textAlign:'center' },
+  bar:      { height:3, backgroundColor:'rgba(255,255,255,0.07)', borderRadius:2, marginTop:5, overflow:'hidden' },
+  barFill:  { height:3, borderRadius:2 },
+
+  // Hizb
+  section:  { marginHorizontal: SPACING.lg, marginBottom:14 },
+  secTitle: { fontFamily: FONTS.amiriBold, fontSize:14, color: COLORS.goldLight, marginBottom:8 },
+  hizbRow:  { flexDirection:'row', gap:2, height:36, alignItems:'flex-end' },
+  hizbSeg:  { flex:1, height:28, backgroundColor:'rgba(255,255,255,0.05)',
+              borderRadius:2, overflow:'hidden', position:'relative', justifyContent:'flex-end' },
+  hizbFill: { width:'100%', backgroundColor: COLORS.green3, borderRadius:2 },
+  hizbLbl:  { position:'absolute', bottom:-13, left:0, right:0, textAlign:'center',
+              fontFamily: FONTS.cairo, fontSize:7, color: COLORS.muted },
+
+  // Legend
+  legend:   { flexDirection:'row', justifyContent:'center', gap:12,
+              marginHorizontal: SPACING.lg, marginBottom:10 },
+  legItem:  { flexDirection:'row', alignItems:'center', gap:4 },
+  legSwatch:{ width:10, height:10, borderRadius:3, borderWidth:0.5, borderColor:'rgba(201,146,46,0.2)' },
+  legLabel: { fontFamily: FONTS.cairo, fontSize:10, color: COLORS.muted },
+
+  // Filters
+  pill:     { paddingHorizontal:12, paddingVertical:6, borderRadius:20,
+              borderWidth:1, borderColor:'rgba(201,146,46,0.2)', backgroundColor: COLORS.deep2 },
+  pillOn:   { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
+  pillTxt:  { fontFamily: FONTS.cairo, fontSize:11, color: COLORS.muted },
+  pillTxtOn:{ color: COLORS.deep, fontFamily: FONTS.cairoBold },
+
+  // Tiles
+  tile:       { borderRadius:6, padding:4, borderWidth:0.5, borderColor:'rgba(201,146,46,0.18)',
+                overflow:'hidden', alignItems:'center', position:'relative',
+                shadowColor:'#000', shadowOffset:{width:0,height:2}, shadowOpacity:0.25, shadowRadius:3, elevation:3 },
+  tileSheen:  { position:'absolute', top:0, left:0, right:0, height:'38%',
+                backgroundColor:'rgba(255,255,255,0.07)', borderRadius:6 },
+  badge:      { width:16, height:16, borderRadius:8, backgroundColor:'rgba(201,146,46,0.14)',
+                alignItems:'center', justifyContent:'center', marginBottom:2 },
+  badgeDone:  { backgroundColor: COLORS.green },
+  badgeTxt:   { fontFamily: FONTS.cairo, fontSize:7, color: COLORS.muted },
+  tileName:   { fontFamily: FONTS.amiri, fontSize:12, textAlign:'center', lineHeight:15, flex:1 },
+  tilePageCount:{ fontFamily: FONTS.cairo, fontSize:8, color: COLORS.muted },
+  tileBar:    { width:'88%', height:2, backgroundColor:'rgba(255,255,255,0.08)', borderRadius:1, overflow:'hidden', marginTop:2 },
+  tileBarFill:{ height:2, borderRadius:1 },
+  doneCheck:  { position:'absolute', top:2, right:2, fontSize:8, color: COLORS.green3 },
+
+  // Modal
+  overlay:    { flex:1, backgroundColor:'rgba(0,0,0,0.72)', justifyContent:'flex-end' },
+  modalCard:  { backgroundColor: COLORS.deep2, borderTopLeftRadius:24, borderTopRightRadius:24,
+                padding: SPACING.xl, borderTopWidth:1, borderColor:'rgba(201,146,46,0.28)' },
+  modalHandle:{ width:40, height:4, borderRadius:2, backgroundColor:'rgba(255,255,255,0.15)',
+                alignSelf:'center', marginBottom: SPACING.lg },
+  modalTitle: { fontFamily: FONTS.amiriBold, fontSize:24, color: COLORS.goldLight, textAlign:'center' },
+  modalMeta:  { fontFamily: FONTS.cairo, fontSize:13, color: COLORS.muted, textAlign:'center', marginBottom: SPACING.md },
+  mProgOuter: { height:8, backgroundColor:'rgba(255,255,255,0.08)', borderRadius:4, overflow:'hidden', marginBottom:6 },
+  mProgFill:  { height:8, backgroundColor: COLORS.gold, borderRadius:4 },
+  mProgTxt:   { fontFamily: FONTS.cairo, fontSize:12, color: COLORS.muted, textAlign:'center', marginBottom: SPACING.md },
+  quickRow:   { flexDirection:'row', gap:6, marginBottom: SPACING.md },
+  qBtn:       { flex:1, backgroundColor:'rgba(201,146,46,0.1)', borderRadius: RADIUS.md,
+                paddingVertical:8, alignItems:'center', borderWidth:1, borderColor:'rgba(201,146,46,0.2)' },
+  qBtnOn:     { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
+  qBtnTxt:    { fontFamily: FONTS.cairo, fontSize:11, color: COLORS.cream2 },
+  qBtnTxtOn:  { color: COLORS.deep, fontFamily: FONTS.cairoBold },
+  inputWrap:  { flexDirection:'row', alignItems:'center', justifyContent:'space-between',
+                backgroundColor: COLORS.deep3, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.lg },
+  inputLabel: { fontFamily: FONTS.cairo, fontSize:13, color: COLORS.cream2 },
+  input:      { fontFamily: FONTS.cairoBold, fontSize:22, color: COLORS.gold,
+                width:70, textAlign:'center', borderBottomWidth:1.5, borderBottomColor: COLORS.gold },
+  mActions:   { flexDirection:'row', gap: SPACING.md },
+  cancelBtn:  { flex:1, backgroundColor:'rgba(255,255,255,0.06)', borderRadius: RADIUS.full,
+                paddingVertical:14, alignItems:'center' },
+  cancelTxt:  { fontFamily: FONTS.cairo, fontSize:14, color: COLORS.muted },
+  saveBtn:    { flex:2, backgroundColor: COLORS.green2, borderRadius: RADIUS.full,
+                paddingVertical:14, alignItems:'center' },
+  saveTxt:    { fontFamily: FONTS.cairoBold, fontSize:15, color:'white' },
 });
