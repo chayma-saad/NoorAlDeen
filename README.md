@@ -116,7 +116,7 @@ npm install
 
 ### 3 — Rename GitHub repo (one time, in browser)
 
-1. Go to `https://github.com/chaymasd/NoorAlDeen_v2`
+1. Go to `https://github.com/chaymasd/NoorAlDeen`
 2. Click **Settings** (top tab)
 3. Scroll to **Danger Zone** at the bottom
 4. Click **Rename this repository**
@@ -125,7 +125,7 @@ npm install
 Then update your local remote to point to the new name:
 
 ```bash
-git remote set-url origin https://github.com/chaymasd/focus_on_ur_deen.git
+git remote set-url origin https://github.com/chaymasd/NoorAlDeen.git
 ```
 
 ### 4 — Enable GitHub Pages (one time, in browser)
