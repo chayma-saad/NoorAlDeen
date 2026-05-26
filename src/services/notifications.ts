@@ -9,6 +9,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -33,30 +35,37 @@ export const schedulePrayerNotifications = async (
     const notifSettings = await getPrayerNotifications();
 
     for (const prayer of PRAYER_NAMES) {
-      if (!notifSettings[prayer.key]) continue;
+      // Sunrise has no athan — skip
+      if (prayer.key === 'Sunrise') continue;
+      if (notifSettings[prayer.key] === false) continue;
+
       const timeStr = timings[prayer.key as keyof PrayerTimes];
       if (!timeStr) continue;
 
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      const trigger = new Date();
-      trigger.setHours(hours, minutes, 0, 0);
-
-      if (trigger <= new Date()) {
-        trigger.setDate(trigger.getDate() + 1);
-      }
+      // Strip any "(+01)" timezone suffix from the API time string
+      const cleanTime = timeStr.replace(/\s*\(.*\)$/, '').trim();
+      const [hours, minutes] = cleanTime.split(':').map(Number);
+      if (isNaN(hours) || isNaN(minutes)) continue;
 
       await Notifications.scheduleNotificationAsync({
         content: {
           title: `🕌 حان وقت ${prayer.arabic}`,
-          body: 'حيّ على الصلاة، حيّ على الفلاح',
-          sound: true,
-          data: { prayer: prayer.key },
+          body: 'حيّ على الصلاة · حيّ على الفلاح',
+          sound: 'adhan.mp3',
+          // ── CRITICAL: these fields drive the in-app PrayerCallScreen ──
+          data: {
+            type: 'PRAYER_CALL',
+            prayer: prayer.key,
+            prayerArabic: prayer.arabic,
+            prayerTime: cleanTime,
+          },
+          ...(Platform.OS === 'android' && { channelId: 'prayer-call' }),
         },
         trigger: {
           hour: hours,
           minute: minutes,
           repeats: true,
-        } as Notifications.DailyTriggerInput,
+        } as any,
       });
     }
   } catch (error) {

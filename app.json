@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "نور الدين",
-    "slug": "noor-al-deen",
+    "name": "ركز على دينك",
+    "slug": "ركز-على-دينك",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
-      "backgroundColor": "#0D1B2A"
+      "backgroundColor": "#060D16"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.nooraldeen.app",
+      "bundleIdentifier": "com.focusondeen.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "نحتاج موقعك لحساب أوقات الصلاة الدقيقة",
         "UIBackgroundModes": [
@@ -23,9 +23,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0D1B2A"
+        "backgroundColor": "#060D16"
       },
-      "package": "com.nooraldeen.app",
+      "package": "com.focusondeen.app",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
@@ -38,6 +38,20 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/icon.png",
+      "name": "ركز على دينك",
+      "shortName": "ركز على دينك",
+      "description": "تطبيق إسلامي شخصي للنمو الروحي — أوقات الصلاة والأذكار والأدعية والقرآن",
+      "themeColor": "#060D16",
+      "backgroundColor": "#060D16",
+      "display": "standalone",
+      "orientation": "portrait",
+      "lang": "ar",
+      "dir": "rtl"
     },
     "plugins": [
       [
@@ -59,6 +73,9 @@
       ],
       "expo-audio"
     ],
+    "experiments": {
+      "baseUrl": "/focus_on_ur_deen"
+    },
     "extra": {
       "eas": {
         "projectId": "24bbc460-cbdd-47c1-8f2c-496a76d804e3"

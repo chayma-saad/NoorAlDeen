@@ -11,11 +11,7 @@ import {
 import { usePrayerTimes } from '../hooks/usePrayerTimes';
 import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
 import { PRAYER_NAMES } from '../constants/islamicData';
-import {
-  formatTime,
-  isTimePassed,
-  toArabicNum,
-} from '../utils/helpers';
+import { formatTime, isTimePassed, toArabicNum } from '../utils/helpers';
 import {
   getPrayerNotifications,
   setPrayerNotification,
@@ -23,15 +19,22 @@ import {
   toggleDailyCheck,
 } from '../services/storage';
 
+const PRAYER_ICONS: Record<string, string> = {
+  Fajr: '🌙',
+  Sunrise: '🌅',
+  Dhuhr: '☀️',
+  Asr: '🌤',
+  Maghrib: '🌆',
+  Isha: '🌃',
+};
+
 export default function PrayerTimesScreen() {
   const { prayerData, loading, error, nextPrayer, reload } = usePrayerTimes();
   const [notifications, setNotifications] = useState<Record<string, boolean>>({});
   const [dailyChecks, setDailyChecks] = useState<Record<string, boolean>>({});
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
+  useEffect(() => { loadSettings(); }, []);
 
   const loadSettings = async () => {
     const notifs = await getPrayerNotifications();
@@ -57,43 +60,50 @@ export default function PrayerTimesScreen() {
     setDailyChecks((prev) => ({ ...prev, [checkId]: newVal }));
   };
 
-  const hijriDate = prayerData?.date.hijri;
+  const hijri = prayerData?.date.hijri;
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.gold} />}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.gold} />
+      }
     >
-      {/* Header */}
+      {/* ── Header ─────────────────────────────────────────────── */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>أوقات الصلاة</Text>
-        {hijriDate && (
-          <Text style={styles.headerSub}>
-            {hijriDate.weekday.ar} · {toArabicNum(hijriDate.day)} {hijriDate.month.ar} {toArabicNum(hijriDate.year)} هـ
+        <Text style={styles.headerDecor}>✦ ركز على دينك ✦</Text>
+        {hijri && (
+          <Text style={styles.headerDate}>
+            {hijri.weekday.ar} · {toArabicNum(parseInt(hijri.day))} {hijri.month.ar} {toArabicNum(parseInt(hijri.year))} هـ
           </Text>
         )}
       </View>
 
-      {/* Next Prayer Card */}
-      {nextPrayer && (
-        <View style={styles.nextPrayerCard}>
-          <Text style={styles.nextLabel}>الصلاة القادمة</Text>
-          <Text style={styles.nextName}>{nextPrayer.arabic}</Text>
-          <Text style={styles.nextTime}>{formatTime(nextPrayer.time)}</Text>
-          <View style={styles.countdownBadge}>
-            <Text style={styles.countdownText}>{nextPrayer.countdown}</Text>
+      {/* ── Next Prayer Hero Card ──────────────────────────────── */}
+      {nextPrayer ? (
+        <View style={styles.heroCard}>
+          {/* Decorative corner ornaments */}
+          <Text style={styles.ornamentTL}>❧</Text>
+          <Text style={styles.ornamentTR}>❧</Text>
+
+          <Text style={styles.heroLabel}>الصلاة القادمة</Text>
+          <View style={styles.heroDivider} />
+          <Text style={styles.heroIcon}>{PRAYER_ICONS[nextPrayer.name] || '🕌'}</Text>
+          <Text style={styles.heroName}>{nextPrayer.arabic}</Text>
+          <Text style={styles.heroTime}>{formatTime(nextPrayer.time)}</Text>
+          <View style={styles.heroBadge}>
+            <Text style={styles.heroBadgeText}>{nextPrayer.countdown}</Text>
           </View>
         </View>
-      )}
-
-      {loading && !prayerData && (
+      ) : loading ? (
         <View style={styles.loadingBox}>
           <ActivityIndicator color={COLORS.gold} size="large" />
           <Text style={styles.loadingText}>جارٍ تحميل أوقات الصلاة...</Text>
         </View>
-      )}
+      ) : null}
 
+      {/* ── Error ─────────────────────────────────────────────── */}
       {error && !prayerData && (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>{error}</Text>
@@ -103,9 +113,11 @@ export default function PrayerTimesScreen() {
         </View>
       )}
 
-      {/* Prayer List */}
+      {/* ── Prayer List ──────────────────────────────────────── */}
       {prayerData && (
-        <View style={styles.prayerList}>
+        <View style={styles.prayerCard}>
+          <Text style={styles.sectionLabel}>مواقيت الصلاة</Text>
+          <View style={styles.separator} />
           {PRAYER_NAMES.map((prayer) => {
             const time = prayerData.timings[prayer.key as keyof typeof prayerData.timings] || '';
             const passed = isTimePassed(time);
@@ -116,32 +128,49 @@ export default function PrayerTimesScreen() {
               <View
                 key={prayer.key}
                 style={[
-                  styles.prayerItem,
-                  passed && styles.prayerPassed,
-                  isCurrent && styles.prayerCurrent,
+                  styles.prayerRow,
+                  isCurrent && styles.prayerRowActive,
+                  passed && !isCurrent && styles.prayerRowPassed,
                 ]}
               >
-                <View style={styles.prayerLeft}>
-                  <Text style={[styles.prayerName, passed && styles.mutedText]}>
+                {/* Active prayer indicator */}
+                {isCurrent && <View style={styles.activeBar} />}
+
+                <Text style={styles.prayerRowIcon}>
+                  {PRAYER_ICONS[prayer.key] || '🕌'}
+                </Text>
+
+                <View style={styles.prayerRowMeta}>
+                  <Text style={[
+                    styles.prayerRowName,
+                    passed && !isCurrent && styles.mutedText,
+                    isCurrent && styles.activeText,
+                  ]}>
                     {prayer.arabic}
                   </Text>
                   <Text style={styles.prayerSunnah}>{prayer.sunnah}</Text>
                 </View>
-                <Text style={[styles.prayerTime, passed && styles.mutedText]}>
+
+                <Text style={[
+                  styles.prayerRowTime,
+                  passed && !isCurrent && styles.mutedText,
+                  isCurrent && styles.activeText,
+                ]}>
                   {formatTime(time)}
                 </Text>
+
                 {prayer.key !== 'Sunrise' && (
                   <TouchableOpacity
                     style={[styles.bellBtn, notifOn && styles.bellBtnOn]}
                     onPress={() => toggleNotif(prayer.key)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Text style={styles.bellIcon}>{notifOn ? '🔔' : '🔕'}</Text>
                   </TouchableOpacity>
                 )}
-                {isCurrent && (
-                  <View style={styles.currentDot}>
-                    <View style={styles.currentDotInner} />
-                  </View>
+
+                {passed && !isCurrent && (
+                  <Text style={styles.passedMark}>✓</Text>
                 )}
               </View>
             );
@@ -149,29 +178,38 @@ export default function PrayerTimesScreen() {
         </View>
       )}
 
-      {/* Duha & Qiyam Tracker */}
-      <View style={styles.extraCard}>
-        <Text style={styles.extraTitle}>عبادات إضافية اليوم</Text>
+      {/* ── Daily Sunnah Tracker ─────────────────────────────── */}
+      <View style={styles.sunnahCard}>
+        <Text style={styles.sectionLabel}>عبادات إضافية</Text>
+        <View style={styles.separator} />
         {[
-          { id: 'duha', label: 'صلاة الضحى', sub: 'ركعتان على الأقل بعد الشروق' },
-          { id: 'qiyam', label: 'قيام الليل', sub: 'بعد العشاء قبل الفجر' },
-          { id: 'witr', label: 'صلاة الوتر', sub: 'ختام الليل بالوتر' },
-          { id: 'fasting', label: 'صيام اليوم', sub: 'اقتداءً بسنة النبي ﷺ' },
-        ].map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.extraItem}
-            onPress={() => handleCheck(item.id)}
-          >
-            <View style={[styles.checkBox, dailyChecks[item.id] && styles.checkBoxDone]}>
-              {dailyChecks[item.id] && <Text style={styles.checkMark}>✓</Text>}
-            </View>
-            <View style={styles.extraInfo}>
-              <Text style={styles.extraLabel}>{item.label}</Text>
-              <Text style={styles.extraSub}>{item.sub}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+          { id: 'duha', label: 'صلاة الضحى', sub: 'ركعتان على الأقل بعد الشروق', icon: '🌤' },
+          { id: 'qiyam', label: 'قيام الليل', sub: 'بعد العشاء قبل الفجر', icon: '🌙' },
+          { id: 'witr', label: 'صلاة الوتر', sub: 'ختام الليل بالوتر', icon: '⭐' },
+          { id: 'fasting', label: 'صيام اليوم', sub: 'اقتداءً بسنة النبي ﷺ', icon: '🤍' },
+        ].map((item) => {
+          const done = dailyChecks[item.id];
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.sunnahItem, done && styles.sunnahItemDone]}
+              onPress={() => handleCheck(item.id)}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.checkCircle, done && styles.checkCircleDone]}>
+                {done
+                  ? <Text style={styles.checkMark}>✓</Text>
+                  : <Text style={styles.sunnahItemIcon}>{item.icon}</Text>
+                }
+              </View>
+              <View style={styles.sunnahInfo}>
+                <Text style={[styles.sunnahLabel, done && styles.sunnahLabelDone]}>{item.label}</Text>
+                <Text style={styles.sunnahSub}>{item.sub}</Text>
+              </View>
+              {done && <Text style={styles.doneBadge}>أنجزت</Text>}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </ScrollView>
   );
@@ -180,66 +218,142 @@ export default function PrayerTimesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.deep },
   content: { paddingBottom: 100 },
-  header: { padding: SPACING.lg, paddingBottom: SPACING.sm, alignItems: 'center' },
-  headerTitle: { fontFamily: FONTS.amiriBold, fontSize: 26, color: COLORS.goldLight, marginBottom: 4 },
-  headerSub: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.muted },
-  nextPrayerCard: {
-    margin: SPACING.lg,
-    marginTop: 0,
-    backgroundColor: COLORS.green,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.xl,
+
+  // Header
+  header: { alignItems: 'center', paddingTop: SPACING.xl, paddingBottom: SPACING.lg },
+  headerDecor: { fontFamily: FONTS.amiriBold, fontSize: 22, color: COLORS.goldLight, letterSpacing: 2, marginBottom: 6 },
+  headerDate: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.muted },
+
+  // Hero card
+  heroCard: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.deep2,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xxl,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.gold,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  nextLabel: { fontFamily: FONTS.cairo, fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 4 },
-  nextName: { fontFamily: FONTS.amiriBold, fontSize: 30, color: 'white', marginBottom: 4 },
-  nextTime: { fontFamily: FONTS.cairoBold, fontSize: 40, color: 'white', letterSpacing: 2, marginBottom: 8 },
-  countdownBadge: { backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: RADIUS.full, paddingHorizontal: 14, paddingVertical: 5 },
-  countdownText: { fontFamily: FONTS.cairo, fontSize: 13, color: 'rgba(255,255,255,0.9)' },
-  loadingBox: { alignItems: 'center', paddingVertical: 40 },
-  loadingText: { fontFamily: FONTS.cairo, fontSize: 14, color: COLORS.muted, marginTop: 12 },
+  ornamentTL: { position: 'absolute', top: 10, right: 14, color: COLORS.goldDark, fontSize: 20, transform: [{ scaleX: -1 }] },
+  ornamentTR: { position: 'absolute', top: 10, left: 14, color: COLORS.goldDark, fontSize: 20 },
+  heroLabel: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted, letterSpacing: 1, marginBottom: 8 },
+  heroDivider: { width: 40, height: 1, backgroundColor: COLORS.gold, opacity: 0.4, marginBottom: 12 },
+  heroIcon: { fontSize: 36, marginBottom: 6 },
+  heroName: { fontFamily: FONTS.amiriBold, fontSize: 34, color: COLORS.goldLight, marginBottom: 4 },
+  heroTime: { fontFamily: FONTS.cairoBold, fontSize: 48, color: COLORS.cream, letterSpacing: 2, marginBottom: 14 },
+  heroBadge: {
+    backgroundColor: COLORS.goldSoft,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 20, paddingVertical: 6,
+    borderWidth: 1, borderColor: 'rgba(201,146,46,0.3)',
+  },
+  heroBadgeText: { fontFamily: FONTS.cairoSemiBold, fontSize: 14, color: COLORS.goldLight },
+
+  // Loading / Error
+  loadingBox: { alignItems: 'center', paddingVertical: 60 },
+  loadingText: { fontFamily: FONTS.cairo, fontSize: 14, color: COLORS.muted, marginTop: 14 },
   errorBox: { margin: SPACING.lg, alignItems: 'center', padding: 20 },
   errorText: { fontFamily: FONTS.cairo, fontSize: 14, color: COLORS.error, textAlign: 'center', marginBottom: 12 },
   retryBtn: { backgroundColor: COLORS.gold, borderRadius: RADIUS.full, paddingHorizontal: 20, paddingVertical: 8 },
   retryText: { fontFamily: FONTS.cairoBold, fontSize: 13, color: COLORS.deep },
-  prayerList: { marginHorizontal: SPACING.lg, gap: SPACING.sm },
-  prayerItem: {
-    backgroundColor: COLORS.deep2,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(201,146,46,0.1)',
-  },
-  prayerPassed: { opacity: 0.5 },
-  prayerCurrent: { borderColor: COLORS.gold, backgroundColor: 'rgba(201,146,46,0.08)' },
-  prayerLeft: { flex: 1 },
-  prayerName: { fontFamily: FONTS.amiri, fontSize: 20, color: COLORS.cream, marginBottom: 2 },
-  prayerSunnah: { fontFamily: FONTS.cairo, fontSize: 10, color: COLORS.green3, backgroundColor: 'rgba(46,107,79,0.2)', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 10, alignSelf: 'flex-start' },
-  prayerTime: { fontFamily: FONTS.cairoBold, fontSize: 18, color: COLORS.goldLight, marginHorizontal: SPACING.md },
-  mutedText: { color: COLORS.muted },
-  bellBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(201,146,46,0.1)', alignItems: 'center', justifyContent: 'center' },
-  bellBtnOn: { backgroundColor: COLORS.gold },
-  bellIcon: { fontSize: 14 },
-  currentDot: { position: 'absolute', top: 8, left: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.gold },
-  currentDotInner: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.gold },
-  extraCard: {
-    margin: SPACING.lg,
-    marginTop: SPACING.md,
+
+  // Prayer card
+  prayerCard: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
     backgroundColor: COLORS.deep2,
     borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(201,146,46,0.15)',
+    borderColor: 'rgba(201,146,46,0.12)',
   },
-  extraTitle: { fontFamily: FONTS.amiriBold, fontSize: 18, color: COLORS.goldLight, marginBottom: SPACING.md },
-  extraItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: SPACING.sm, gap: SPACING.md },
-  checkBox: { width: 24, height: 24, borderRadius: 6, borderWidth: 1.5, borderColor: 'rgba(201,146,46,0.4)', alignItems: 'center', justifyContent: 'center' },
-  checkBoxDone: { backgroundColor: COLORS.green2, borderColor: COLORS.green3 },
-  checkMark: { fontSize: 13, color: 'white' },
-  extraInfo: { flex: 1 },
-  extraLabel: { fontFamily: FONTS.cairo, fontSize: 14, color: COLORS.cream2 },
-  extraSub: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted },
+  sectionLabel: {
+    fontFamily: FONTS.cairoSemiBold,
+    fontSize: 12,
+    color: COLORS.gold,
+    letterSpacing: 2,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.sm,
+  },
+  separator: { height: 1, backgroundColor: 'rgba(201,146,46,0.12)', marginHorizontal: SPACING.lg, marginBottom: SPACING.sm },
+
+  prayerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
+    position: 'relative',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.04)',
+  },
+  prayerRowActive: {
+    backgroundColor: 'rgba(201,146,46,0.07)',
+  },
+  prayerRowPassed: { opacity: 0.45 },
+  activeBar: {
+    position: 'absolute', left: 0, top: 8, bottom: 8,
+    width: 3, backgroundColor: COLORS.gold, borderRadius: 2,
+  },
+  prayerRowIcon: { fontSize: 18, width: 26, textAlign: 'center' },
+  prayerRowMeta: { flex: 1 },
+  prayerRowName: { fontFamily: FONTS.amiri, fontSize: 20, color: COLORS.cream, marginBottom: 1 },
+  prayerSunnah: {
+    fontFamily: FONTS.cairo, fontSize: 10, color: COLORS.green3,
+    backgroundColor: COLORS.greenGlow, paddingHorizontal: 6, paddingVertical: 1,
+    borderRadius: 10, alignSelf: 'flex-start',
+  },
+  prayerRowTime: { fontFamily: FONTS.cairoBold, fontSize: 17, color: COLORS.goldLight },
+  activeText: { color: COLORS.gold },
+  mutedText: { color: COLORS.muted },
+  bellBtn: {
+    width: 30, height: 30, borderRadius: 15,
+    backgroundColor: 'rgba(201,146,46,0.08)',
+    alignItems: 'center', justifyContent: 'center', marginLeft: 4,
+  },
+  bellBtnOn: { backgroundColor: COLORS.gold },
+  bellIcon: { fontSize: 13 },
+  passedMark: { fontSize: 12, color: COLORS.green3, marginLeft: 4 },
+
+  // Sunnah tracker
+  sunnahCard: {
+    marginHorizontal: SPACING.lg,
+    backgroundColor: COLORS.deep2,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(201,146,46,0.12)',
+    marginBottom: SPACING.lg,
+  },
+  sunnahItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.04)',
+  },
+  sunnahItemDone: { backgroundColor: 'rgba(60,168,124,0.06)' },
+  checkCircle: {
+    width: 36, height: 36, borderRadius: 18,
+    borderWidth: 1.5, borderColor: 'rgba(201,146,46,0.3)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  checkCircleDone: { backgroundColor: COLORS.green2, borderColor: COLORS.green3 },
+  checkMark: { fontSize: 14, color: 'white' },
+  sunnahItemIcon: { fontSize: 16 },
+  sunnahInfo: { flex: 1 },
+  sunnahLabel: { fontFamily: FONTS.cairoSemiBold, fontSize: 14, color: COLORS.cream2 },
+  sunnahLabelDone: { color: COLORS.green3 },
+  sunnahSub: { fontFamily: FONTS.cairoLight, fontSize: 11, color: COLORS.muted },
+  doneBadge: {
+    fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.green3,
+    backgroundColor: COLORS.greenGlow, paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: RADIUS.full,
+  },
 });

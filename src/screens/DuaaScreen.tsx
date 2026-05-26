@@ -1,11 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Animated,
   LayoutAnimation,
   UIManager,
   Platform,
@@ -17,17 +16,19 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// =================== DATA ===================
+// ─── Adab Steps ────────────────────────────────────────────────────────────────
 
 const ADAB_STEPS = [
   { num: 1, title: 'الثناء على الله', text: 'يا الله يا ذا الجلال والإكرام يا ذا الطول والإنعام' },
   { num: 2, title: 'الصلاة على النبي ﷺ', text: 'اللهم يا رب صل وسلم وبارك على سيدنا محمد' },
   { num: 3, title: 'التوسل باسم الله الأعظم', text: 'اللهم إني أسألك بأني أشهد أنك أنت الله لا إله إلا أنت الأحد الصمد الذي لم يلد ولم يولد ولم يكن له كفوًا أحد' },
-  { num: 4, title: 'الدعاء الجامع', text: 'اللهم إني أسألك من الخير كله عاجله وآجله ما علمتُ منه وما لم أعلم وأعوذ بك من الشر كله عاجله وآجله ما علمتُ منه وما لم أعلم' },
+  { num: 4, title: 'الدعاء الجامع', text: 'اللهم إني أسألك من الخير كله عاجله وآجله ما علمتُ منه وما لم أعلم' },
   { num: 5, title: 'يا حي يا قيوم', text: 'يا حي يا قيوم برحمتك أستغيث أصلح لي شأني كله ولا تكلني إلى نفسي طرفة عين' },
   { num: 6, title: 'خير الدنيا والآخرة', text: 'اللهم آتنا في الدنيا حسنة وفي الآخرة حسنة وقنا عذاب النار' },
   { num: 7, title: 'الختام بالصلاة على النبي', text: 'اللهم صل وسلم وبارك على سيدنا محمد وعلى آله وصحبه أجمعين' },
 ];
+
+// ─── Duaa Data ─────────────────────────────────────────────────────────────────
 
 interface Duaa {
   text: string;
@@ -39,33 +40,54 @@ interface Category {
   id: string;
   label: string;
   icon: string;
-  color: string;
+  accent: string;
   mood: string;
   duaas: Duaa[];
 }
 
 const CATEGORIES: Category[] = [
+  // ── 1. Anxiety ──────────────────────────────────────────────────────────────
   {
     id: 'anxiety',
     label: 'القلق والهم',
     icon: '💙',
-    color: COLORS.blue,
+    accent: COLORS.blue3,
     mood: 'عند الضيق والقلق، تذكر أن الله أقرب إليك من حبل الوريد. هذه الأدعية تُعيد للقلب سكينته.',
     duaas: [
       { text: 'اللهم إني أعوذ بك من الهمّ والحزن والعجز والكسل والبخل والجبن وضلع الدَّين وغلبة الرجال', src: 'البخاري: ٦٣٦٣' },
       { text: 'يا حي يا قيوم برحمتك أستغيث أصلح لي شأني كله ولا تكلني إلى نفسي طرفة عين', src: 'صحيح الترغيب: ٦٥٤' },
       { text: 'اللهم لا سهل إلا ما جعلته سهلًا وأنت تجعل الحزن سهلًا إذا شئتَ', src: 'صحيح ابن حبان: ١٩٧٤' },
       { text: 'حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ', src: 'آل عمران: ١٧٣' },
-      { text: 'لَا إِلَهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ', src: 'الأنبياء: ٨٧ — دعاء يونس', note: 'دعاء يونس عليه السلام في بطن الحوت، نجّاه الله به' },
+      { text: 'لَا إِلَهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ', src: 'الأنبياء: ٨٧', note: 'دعاء يونس عليه السلام في بطن الحوت — نجّاه الله به' },
       { text: 'اللهم رحمتك أرجو فلا تكلني إلى نفسي طرفة عين وأصلح لي شأني كله لا إله إلا أنت', src: 'صحيح أبي داود: ٤٢٤٦' },
       { text: 'اللهم اجعل في قلبي نورًا وفي بصري نورًا وفي سمعي نورًا واجعل لي نورًا', src: 'البخاري: ٦٣١٦' },
     ],
   },
+
+  // ── 2. Joy & Happiness ──────────────────────────────────────────────────────
+  {
+    id: 'joy',
+    label: 'الفرح والبهجة',
+    icon: '🌟',
+    accent: COLORS.goldLight,
+    mood: 'الفرح بنعمة الله وحمده عليها من أعظم العبادات. دوام الفرح بالله نور لا ينطفئ.',
+    duaas: [
+      { text: 'اللهم إني أسألك من فضلك فرحة القلب وبهجة الروح وسكينة النفس', src: 'دعاء مأثور' },
+      { text: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ', src: 'البقرة: ٢٠١', note: 'الحسنة في الدنيا تشمل صحة البدن وفرح القلب والعلم النافع' },
+      { text: 'اللهم اجعل قلبي سليمًا مطمئنًا فرحًا بذكرك', src: 'دعاء مأثور' },
+      { text: 'اللهم كما فرَّحتني بالإسلام فلا تحرمني من فرح لقائك', src: 'دعاء السلف' },
+      { text: 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ', src: 'الرعد: ٢٨', note: 'أثبت اللهُ في كتابه أن الطمأنينة والبهجة الحقيقية في ذكره' },
+      { text: 'اللهم أعنِّي على ذِكرك وشُكرك وحُسن عبادتك', src: 'صحيح أبي داود: ١٣٤٧' },
+      { text: 'رَبِّ أَوْزِعْنِي أَنْ أَشْكُرَ نِعْمَتَكَ الَّتِي أَنْعَمْتَ عَلَيَّ', src: 'الأحقاف: ١٥', note: 'شكر النعمة يُبقيها ويزيدها ويجلب الفرح المستدام' },
+    ],
+  },
+
+  // ── 3. Hope ─────────────────────────────────────────────────────────────────
   {
     id: 'hope',
     label: 'الرجاء والأمل',
     icon: '🌱',
-    color: COLORS.green2,
+    accent: COLORS.green3,
     mood: 'الأمل في الله لا ينقطع. ادعُ ربك وأنت موقن بالإجابة، فإن الله لا يُخيّب من دعاه.',
     duaas: [
       { text: 'رَبَّنَا آتِنَا مِنْ لَدُنكَ رَحْمَةً وَهَيِّئْ لَنَا مِنْ أَمْرِنَا رَشَدًا', src: 'الكهف: ١٠' },
@@ -76,114 +98,157 @@ const CATEGORIES: Category[] = [
       { text: 'اللهم إني أسألك علمًا نافعًا ورزقًا طيبًا وعملًا متقبَّلًا', src: 'صحيح ابن ماجه: ٧٥٣' },
     ],
   },
+
+  // ── 4. Marriage ─────────────────────────────────────────────────────────────
+  {
+    id: 'marriage',
+    label: 'الزواج والنكاح',
+    icon: '💞',
+    accent: COLORS.rose,
+    mood: 'الزواج الصالح سكن ومودة ورحمة. ادعُ الله بهذه الأدعية الجامعة من القرآن والسنة.',
+    duaas: [
+      { text: 'رَبِّ هَبْ لِي مِنَ الصَّالِحِينَ', src: 'الصافات: ١٠٠', note: 'دعاء إبراهيم عليه السلام طالبًا الذرية الصالحة والزوج الصالح' },
+      { text: 'رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا', src: 'الفرقان: ٧٤' },
+      { text: 'اللهم ارزقني زوجًا صالحًا يعينني على طاعتك ويُقرِّبني إليك', src: 'دعاء مأثور' },
+      { text: 'بَارَكَ اللَّهُ لَكَ وَبَارَكَ عَلَيْكَ وَجَمَعَ بَيْنَكُمَا فِي خَيْرٍ', src: 'أبو داود: ٢١٣٠', note: 'هذا ما يُقال للمتزوج حديثًا — أفضل دعاء يُهدى في الزفاف' },
+      { text: 'اللهم ألِّف بين قلبينا كما ألَّفتَ بين الأنبياء وأزواجهم الصالحين', src: 'دعاء مأثور' },
+      { text: 'اللهم أرزقنا من الحب الحلال ما تجعله سكنًا ومودةً ورحمة', src: 'مستوحى من الروم: ٢١' },
+      { text: 'وَمِنْ آيَاتِهِ أَنْ خَلَقَ لَكُمْ مِنْ أَنفُسِكُمْ أَزْوَاجًا لِتَسْكُنُوا إِلَيْهَا وَجَعَلَ بَيْنَكُم مَّوَدَّةً وَرَحْمَةً', src: 'الروم: ٢١', note: 'جعل الله المودة والرحمة من آياته الكونية — سُبحانه' },
+    ],
+  },
+
+  // ── 5. Qada al-haja ─────────────────────────────────────────────────────────
+  {
+    id: 'qadahaja',
+    label: 'قضاء الحاجة',
+    icon: '🤲',
+    accent: COLORS.amber2,
+    mood: 'إذا أغلقت الأبواب فلا تنسَ أن لله مفتاحًا لكل باب. توكَّل وادعُ فإن الله يُيسِّر.',
+    duaas: [
+      { text: 'اللهم لا سهل إلا ما جعلته سهلًا وأنت تجعل الحزن إذا شئتَ سهلًا', src: 'صحيح ابن حبان: ٩٧٤', note: 'يُقرأ عند كل أمر يُراد تيسيره' },
+      { text: 'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ', src: 'التوبة: ١٢٩', note: 'يقولها سبع مرات صباحًا ومساءً فيكفيه الله ما أهمه' },
+      { text: 'وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ إِنَّ اللَّهَ بَالِغُ أَمْرِهِ', src: 'الطلاق: ٣' },
+      { text: 'اللهم يسِّر لي أموري وأعنِّي على ما أريد تيسيره برحمتك يا أرحم الراحمين', src: 'دعاء مأثور' },
+      { text: 'اللهم إني أسألك بأن لك الحمد لا إله إلا أنت المنان بديع السماوات والأرض يا ذا الجلال والإكرام يا حي يا قيوم', src: 'أبو داود: ١٤٩٥', note: 'هذا من الأدعية التي يُقال أنها من اسم الله الأعظم' },
+      { text: 'فَسَيَكْفِيكَهُمُ اللَّهُ وَهُوَ السَّمِيعُ الْعَلِيمُ', src: 'البقرة: ١٣٧' },
+      { text: 'اللهم إني عبدك ابن عبدك ابن أمتك ناصيتي بيدك ماضٍ فيَّ حكمك عدلٌ فيَّ قضاؤك', src: 'أحمد: ٣٧١٢', note: 'دعاء الفرج — قاله النبي ﷺ ومن دعا به أذهب الله همّه وأبدله فرحًا' },
+    ],
+  },
+
+  // ── 6. Forgiveness ──────────────────────────────────────────────────────────
   {
     id: 'forgiveness',
     label: 'التوبة والاستغفار',
     icon: '💧',
-    color: COLORS.blue2,
+    accent: COLORS.blue3,
     mood: 'الله يفرح بتوبة عبده أكثر من فرح من وجد ضالته. لا تيأس من رحمة الله أبدًا.',
     duaas: [
       { text: 'اللهم إني ظلمتُ نفسي ظلمًا كثيرًا ولا يغفر الذنوب إلا أنت فاغفر لي مغفرةً من عندك وارحمني إنك أنت الغفور الرحيم', src: 'البخاري: ٨٣٤' },
-      { text: 'اللهم إنك عفوٌّ تحب العفو فاعفُ عني', src: 'البخاري: ٣٢٩٤', note: 'دعاء ليلة القدر الذي علّمه النبي ﷺ لعائشة' },
-      { text: 'رَبَّنَا ظَلَمْنَا أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ الْخَاسِرِينَ', src: 'الأعراف: ٢٣ — دعاء آدم وحواء' },
-      { text: 'اللهم اغفر لي خطيئتي وجهلي وإسرافي في أمري وما أنت أعلمُ به مني', src: 'البخاري: ٦٣٩٩' },
-      { text: 'اللهم باعِد بيني وبين خطاياي كما باعدتَ بين المشرق والمغرب اللهم نقِّني من خطاياي كما ينقى الثوب الأبيض من الدَّنس', src: 'مسلم: ٥٩٨' },
+      { text: 'اللهم إنك عفوٌّ تحب العفو فاعفُ عني', src: 'البخاري: ٣٢٩٤', note: 'دعاء ليلة القدر الذي علّمه النبي ﷺ لعائشة رضي الله عنها' },
+      { text: 'رَبَّنَا ظَلَمْنَا أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ الْخَاسِرِينَ', src: 'الأعراف: ٢٣' },
+      { text: 'اللهم باعِد بيني وبين خطاياي كما باعدتَ بين المشرق والمغرب اللهم نقِّني من الخطايا كما ينقى الثوب الأبيض من الدَّنس', src: 'مسلم: ٥٩٨' },
       { text: 'أستغفر الله الذي لا إله إلا هو الحيَّ القيُّومَ وأتوب إليه', src: 'صحيح أبي داود: ١٣٤٣' },
-      { text: 'أنت وليُّنا فاغفر لنا وارحمنا وأنت خير الغافرين', src: 'الأعراف: ١٥٥' },
     ],
   },
+
+  // ── 7. Strength ─────────────────────────────────────────────────────────────
   {
     id: 'strength',
     label: 'الثبات والقوة',
     icon: '⚡',
-    color: COLORS.gold,
+    accent: COLORS.gold,
     mood: 'الثبات على الحق من أعظم النعم. استعن بهذه الأدعية لتثبيت قلبك في مواجهة الفتن.',
     duaas: [
       { text: 'رَبَّنَا لَا تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا وَهَبْ لَنَا مِنْ لَدُنكَ رَحْمَةً إِنَّكَ أَنتَ الْوَهَّابُ', src: 'آل عمران: ٨' },
       { text: 'يا مقلِّب القلوب ثبِّت قلبي على دِينك', src: 'صحيح الترمذي: ٢٧٩٢' },
-      { text: 'رَبَّنَا أَفْرِغْ عَلَيْنَا صَبْرًا وَثَبِّتْ أَقْدَامَنَا وَانصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ', src: 'البقرة: ٢٥٠' },
-      { text: 'اللهم آتِ نفسي تقواها وزكِّها أنت خيرُ مَن زكاها أنت وليُّها ومولاها', src: 'مسلم: ٢٧٢٢' },
-      { text: 'ربِّ أعنِّي ولا تُعِنْ عليَّ وانصرني ولا تنصر عليَّ واهدِني ويسِّر لي الهدى وانصرني على مَن بغى علي', src: 'صحيح أبي داود: ١٣٣٧' },
-      { text: 'يا وليَّ الإسلام وأهله ثبِّتْني به حتى ألقاك', src: 'السلسلة الصحيحة: ١٨٢٣' },
+      { text: 'رَبَّنَا أَفْرِغْ عَلَيْنَا صَبْرًا وَثَبِّتْ أَقْدَامَنَا', src: 'البقرة: ٢٥٠' },
+      { text: 'اللهم آتِ نفسي تقواها وزكِّها أنت خيرُ مَن زكاها', src: 'مسلم: ٢٧٢٢' },
+      { text: 'ربِّ أعنِّي ولا تُعِنْ عليَّ وانصرني ولا تنصر عليَّ', src: 'صحيح أبي داود: ١٣٣٧' },
     ],
   },
+
+  // ── 8. Gratitude ────────────────────────────────────────────────────────────
   {
     id: 'gratitude',
     label: 'الشكر والنعمة',
     icon: '🌸',
-    color: COLORS.green3,
+    accent: COLORS.green3,
     mood: 'الشكر يزيد النعم ويجلب البركة. تذكر نعم الله عليك وادعُ بشكرها.',
     duaas: [
       { text: 'رَبِّ أَوْزِعْنِي أَنْ أَشْكُرَ نِعْمَتَكَ الَّتِي أَنْعَمْتَ عَلَيَّ وَعَلَى وَالِدَيَّ وَأَنْ أَعْمَلَ صَالِحًا تَرْضَاهُ', src: 'الأحقاف: ١٥' },
       { text: 'اللهم أعنِّي على ذِكرك وشُكرك وحُسن عبادتك', src: 'صحيح أبي داود: ١٣٤٧' },
-      { text: 'اللهم لك الحمدُ كله لا قابضَ لما بسطتَ ولا معطيَ لما منعتَ اللهم ابسُط علينا من بركاتك ورحمتك وفضلك ورزقك', src: 'صحيح الأدب المفرد: ٥٤١' },
-      { text: 'اللهم اقسِمْ لنا من خشيتك ما يحول بيننا وبين معاصيك ومن طاعتك ما تبلِّغنا به جنتك', src: 'صحيح الترمذي: ٢٧٨٣' },
+      { text: 'اللهم لك الحمدُ كله ولك الشكر كله ولك الثناء الحسن كله', src: 'صحيح الأدب المفرد: ٥٤١' },
+      { text: 'اللهم اقسِمْ لنا من خشيتك ما يحول بيننا وبين معاصيك', src: 'صحيح الترمذي: ٢٧٨٣' },
     ],
   },
-  {
-    id: 'protection',
-    label: 'الحفظ والاستعاذة',
-    icon: '🛡️',
-    color: COLORS.deep3,
-    mood: 'الذكر والدعاء حصن حصين من الشيطان وكل شر. داوم عليها صباحًا ومساءً.',
-    duaas: [
-      { text: 'اللهم إني أعوذ بك من عذاب القبر ومن عذاب النار ومن فتنة المحيا والممات ومن فتنة المسيح الدجال', src: 'البخاري: ١٣٧٧' },
-      { text: 'أعوذ بكلمات الله التامات من شر ما خلَق', src: 'مسلم: ٢٧٠٨' },
-      { text: 'اللهم احفَظْني بالإسلام قائمًا واحفَظْني بالإسلام قاعدًا واحفظني بالإسلام راقدًا ولا تُشمِتْ بي عدوًّا حاسدًا', src: 'صحيح الجامع: ١٢٦٠' },
-      { text: 'رَبِّ أَعُوذُ بِكَ مِنْ هَمَزَاتِ الشَّيَاطِينِ وَأَعُوذُ بِكَ رَبِّ أَن يَحْضُرُونِ', src: 'المؤمنون: ٩٧-٩٨' },
-      { text: 'اللهم إني أعوذ بك من شر سمعي ومن شر بصري ومن شر لساني ومن شر قلبي ومن شر منيِّي', src: 'صحيح أبي داود: ١٣٧٢' },
-      { text: 'اللهم اعصِمْني من الشيطان الرجيم', src: 'صحيح ابن ماجه: ٦٢٧' },
-    ],
-  },
-  {
-    id: 'health',
-    label: 'الصحة والعافية',
-    icon: '💚',
-    color: COLORS.green,
-    mood: 'العافية من أجل نعم الله، وقد كان النبي ﷺ يسألها دائمًا. فاحرص على سؤالها كل يوم.',
-    duaas: [
-      { text: 'اللهم عافني في بدني اللهم عافني في سمعي اللهم عافني في بصري لا إله إلا أنت اللهم إني أعوذ بك من الكفر والفقر', src: 'صحيح أبي داود: ٤٢٤٥' },
-      { text: 'اللهم إني أسألك العافية في الدنيا والآخرة اللهم إني أسألك العفو والعافية في ديني ودنياي وأهلي ومالي', src: 'صحيح أبي داود: ٤٢٣٩' },
-      { text: 'اللهم إني أعوذ بك من البَرَص والجنون والجُذَام ومن سيِّئ الأسقام', src: 'صحيح أبي داود: ١٣٧٥' },
-      { text: 'اللهم متِّعني بسمعي وبصري واجعَلهما الوارث مني وانصُرني على من يظلمني وخُذ منه بثأري', src: 'صحيح الترمذي: ٢٨٥٤' },
-    ],
-  },
+
+  // ── 9. Family ───────────────────────────────────────────────────────────────
   {
     id: 'family',
     label: 'الأسرة والذرية',
     icon: '👨‍👩‍👧',
-    color: COLORS.pink,
+    accent: COLORS.green3,
     mood: 'الأسرة الصالحة كنز لا يُقدَّر. ادعُ الله لأهلك وذريتك بالصلاح والهداية.',
     duaas: [
       { text: 'رَبِّ هَبْ لِي مِنْ لَدُنكَ ذُرِّيَّةً طَيِّبَةً إِنَّكَ سَمِيعُ الدُّعَاءِ', src: 'آل عمران: ٣٨' },
-      { text: 'رَبِّ اجْعَلْنِي مُقِيمَ الصَّلَاةِ وَمِنْ ذُرِّيَّتِي رَبَّنَا وَتَقَبَّلْ دُعَاءِ', src: 'إبراهيم: ٤٠' },
+      { text: 'رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا', src: 'الفرقان: ٧٤' },
       { text: 'رَبَّنَا اغْفِرْ لِي وَلِوَالِدَيَّ وَلِلْمُؤْمِنِينَ يَوْمَ يَقُومُ الْحِسَابُ', src: 'إبراهيم: ٤١' },
       { text: 'رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا', src: 'الإسراء: ٢٤' },
-      { text: 'رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا', src: 'الفرقان: ٧٤' },
-      { text: 'رَبِّ هَبْ لِي مِنَ الصَّالِحِينَ', src: 'الصافات: ١٠٠' },
     ],
   },
+
+  // ── 10. Protection ──────────────────────────────────────────────────────────
+  {
+    id: 'protection',
+    label: 'الحفظ والاستعاذة',
+    icon: '🛡️',
+    accent: COLORS.blue2,
+    mood: 'الذكر والدعاء حصن حصين من الشيطان وكل شر. داوم عليها صباحًا ومساءً.',
+    duaas: [
+      { text: 'اللهم إني أعوذ بك من عذاب القبر ومن عذاب النار ومن فتنة المحيا والممات', src: 'البخاري: ١٣٧٧' },
+      { text: 'أعوذ بكلمات الله التامات من شر ما خلَق', src: 'مسلم: ٢٧٠٨' },
+      { text: 'رَبِّ أَعُوذُ بِكَ مِنْ هَمَزَاتِ الشَّيَاطِينِ وَأَعُوذُ بِكَ رَبِّ أَن يَحْضُرُونِ', src: 'المؤمنون: ٩٧-٩٨' },
+      { text: 'اللهم إني أعوذ بك من شر سمعي ومن شر بصري ومن شر لساني ومن شر قلبي', src: 'صحيح أبي داود: ١٣٧٢' },
+    ],
+  },
+
+  // ── 11. Health ──────────────────────────────────────────────────────────────
+  {
+    id: 'health',
+    label: 'الصحة والعافية',
+    icon: '💚',
+    accent: COLORS.green2,
+    mood: 'العافية من أجل نعم الله، وكان النبي ﷺ يسألها دائمًا. فاحرص على سؤالها كل يوم.',
+    duaas: [
+      { text: 'اللهم عافني في بدني اللهم عافني في سمعي اللهم عافني في بصري لا إله إلا أنت', src: 'صحيح أبي داود: ٤٢٤٥' },
+      { text: 'اللهم إني أسألك العافية في الدنيا والآخرة اللهم إني أسألك العفو والعافية في ديني ودنياي وأهلي ومالي', src: 'صحيح أبي داود: ٤٢٣٩' },
+      { text: 'اللهم إني أعوذ بك من البَرَص والجنون والجُذَام ومن سيِّئ الأسقام', src: 'صحيح أبي داود: ١٣٧٥' },
+    ],
+  },
+
+  // ── 12. Quranic Duas ────────────────────────────────────────────────────────
   {
     id: 'quran',
     label: 'أدعية قرآنية',
     icon: '📖',
-    color: COLORS.goldDark,
-    mood: 'أدعية الأنبياء من القرآن الكريم — كلام الله يُعلّمك كيف تدعوه.',
+    accent: COLORS.goldDark,
+    mood: 'أدعية الأنبياء من القرآن الكريم — كلام الله يُعلِّمك كيف تدعوه بأحسن الكلام.',
     duaas: [
       { text: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ', src: 'البقرة: ٢٠١' },
       { text: 'رَبَّنَا لَا تُؤَاخِذْنَا إِن نَّسِينَا أَوْ أَخْطَأْنَا', src: 'البقرة: ٢٨٦' },
-      { text: 'رَبَّنَا وَلَا تُحَمِّلْنَا مَا لَا طَاقَةَ لَنَا بِهِ وَاعْفُ عَنَّا وَاغْفِرْ لَنَا وَارْحَمْنَا أَنتَ مَوْلَانَا', src: 'البقرة: ٢٨٦' },
       { text: 'رَبِّ زِدْنِي عِلْمًا', src: 'طه: ١١٤' },
       { text: 'رَبَّنَا اغْفِرْ لَنَا وَلِإِخْوَانِنَا الَّذِينَ سَبَقُونَا بِالْإِيمَانِ', src: 'الحشر: ١٠' },
-      { text: 'رَبَّنَا عَلَيْكَ تَوَكَّلْنَا وَإِلَيْكَ أَنَبْنَا وَإِلَيْكَ الْمَصِيرُ', src: 'الممتحنة: ٤' },
       { text: 'رَبَّنَا أَتْمِمْ لَنَا نُورَنَا وَاغْفِرْ لَنَا إِنَّكَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ', src: 'التحريم: ٨' },
       { text: 'رَبِّ ابْنِ لِي عِنْدَكَ بَيْتًا فِي الْجَنَّةِ', src: 'التحريم: ١١' },
+      { text: 'رَبِّ اجْعَلْنِي مُقِيمَ الصَّلَاةِ وَمِنْ ذُرِّيَّتِي رَبَّنَا وَتَقَبَّلْ دُعَاءِ', src: 'إبراهيم: ٤٠' },
     ],
   },
 ];
 
+// ─── Component ─────────────────────────────────────────────────────────────────
+
 export default function DuaaScreen() {
-  const [activeTab, setActiveTab] = useState<'adab' | 'cats'>('adab');
+  const [activeTab, setActiveTab] = useState<'adab' | 'cats'>('cats');
   const [activeCat, setActiveCat] = useState(CATEGORIES[0]);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
@@ -200,14 +265,21 @@ export default function DuaaScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Top mode tabs */}
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerDecor}>✦ ✦ ✦</Text>
+        <Text style={styles.headerTitle}>كنز الأدعية</Text>
+      </View>
+
+      {/* Mode Tabs */}
       <View style={styles.modeTabs}>
         <TouchableOpacity
           style={[styles.modeTab, activeTab === 'adab' && styles.modeTabActive]}
           onPress={() => setActiveTab('adab')}
         >
           <Text style={[styles.modeTabText, activeTab === 'adab' && styles.modeTabTextActive]}>
-            🌟 آداب الدعاء
+            آداب الدعاء
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -215,23 +287,22 @@ export default function DuaaScreen() {
           onPress={() => setActiveTab('cats')}
         >
           <Text style={[styles.modeTabText, activeTab === 'cats' && styles.modeTabTextActive]}>
-            🤲 الأدعية المصنّفة
+            الأدعية المصنَّفة
           </Text>
         </TouchableOpacity>
       </View>
 
+      {/* Adab Tab */}
       {activeTab === 'adab' ? (
         <ScrollView contentContainerStyle={{ padding: SPACING.lg, paddingBottom: 120 }}>
-          {/* Adab intro */}
           <View style={styles.adabIntro}>
             <Text style={styles.adabIntroTitle}>الترتيب الأمثل للدعاء</Text>
             <Text style={styles.adabIntroSub}>
               «خير الدعاء دعاء يوم عرفة» — اتبع هذه الخطوات لدعاء مقبول بإذن الله
             </Text>
           </View>
-
-          {ADAB_STEPS.map((step, i) => (
-            <View key={i} style={styles.adabCard}>
+          {ADAB_STEPS.map((step) => (
+            <View key={step.num} style={styles.adabCard}>
               <View style={styles.adabNumWrap}>
                 <Text style={styles.adabNum}>{toArabicNum(step.num)}</Text>
               </View>
@@ -241,9 +312,8 @@ export default function DuaaScreen() {
               </View>
             </View>
           ))}
-
           <View style={styles.tipsBox}>
-            <Text style={styles.tipsTitle}>💡 من آداب الدعاء</Text>
+            <Text style={styles.tipsTitle}>من آداب الدعاء</Text>
             {[
               'استقبل القبلة وارفع يديك',
               'ابدأ بالحمد والثناء على الله',
@@ -253,7 +323,7 @@ export default function DuaaScreen() {
               'أفضل أوقات الدعاء: السحر، بين الأذان والإقامة، يوم عرفة، ليلة القدر',
             ].map((tip, i) => (
               <View key={i} style={styles.tipItem}>
-                <Text style={styles.tipDot}>•</Text>
+                <Text style={styles.tipDot}>✦</Text>
                 <Text style={styles.tipText}>{tip}</Text>
               </View>
             ))}
@@ -261,27 +331,38 @@ export default function DuaaScreen() {
         </ScrollView>
       ) : (
         <View style={{ flex: 1 }}>
-          {/* Category Selector */}
+
+          {/* Category Scroll */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.catScroll}
-            contentContainerStyle={{ paddingHorizontal: SPACING.lg, gap: 8 }}
+            contentContainerStyle={{ paddingHorizontal: SPACING.lg, gap: 8, paddingVertical: 8 }}
           >
-            {CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat.id}
-                style={[styles.catPill, activeCat.id === cat.id && styles.catPillActive]}
-                onPress={() => selectCat(cat)}
-              >
-                <Text style={styles.catPillText}>{cat.icon} {cat.label}</Text>
-              </TouchableOpacity>
-            ))}
+            {CATEGORIES.map((cat) => {
+              const active = activeCat.id === cat.id;
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[
+                    styles.catPill,
+                    active && { backgroundColor: cat.accent, borderColor: cat.accent },
+                  ]}
+                  onPress={() => selectCat(cat)}
+                >
+                  <Text style={[styles.catPillText, active && styles.catPillTextActive]}>
+                    {cat.icon} {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
 
+          {/* Duaa List */}
           <ScrollView contentContainerStyle={{ padding: SPACING.lg, paddingBottom: 120 }}>
-            {/* Mood message */}
-            <View style={styles.moodBox}>
+
+            {/* Mood box */}
+            <View style={[styles.moodBox, { borderRightColor: activeCat.accent }]}>
               <Text style={styles.moodText}>{activeCat.mood}</Text>
             </View>
 
@@ -294,8 +375,8 @@ export default function DuaaScreen() {
                 activeOpacity={0.85}
               >
                 <View style={styles.duaaHeader}>
-                  <View style={[styles.duaaNum, { backgroundColor: `${activeCat.color}22` }]}>
-                    <Text style={[styles.duaaNumText, { color: activeCat.color }]}>
+                  <View style={[styles.duaaNum, { backgroundColor: `${activeCat.accent}22` }]}>
+                    <Text style={[styles.duaaNumText, { color: activeCat.accent }]}>
                       {toArabicNum(i + 1)}
                     </Text>
                   </View>
@@ -306,7 +387,7 @@ export default function DuaaScreen() {
                   <View style={styles.duaaBody}>
                     <Text style={styles.duaaArabic}>{duaa.text}</Text>
                     {duaa.note && (
-                      <View style={styles.noteBox}>
+                      <View style={[styles.noteBox, { borderRightColor: activeCat.accent }]}>
                         <Text style={styles.noteText}>💡 {duaa.note}</Text>
                       </View>
                     )}
@@ -322,42 +403,95 @@ export default function DuaaScreen() {
   );
 }
 
+// ─── Styles ────────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.deep },
-  modeTabs: { flexDirection: 'row', backgroundColor: COLORS.deep2, borderBottomWidth: 1, borderBottomColor: 'rgba(201,146,46,0.2)' },
-  modeTab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+
+  header: { alignItems: 'center', paddingTop: SPACING.lg, paddingBottom: SPACING.sm },
+  headerDecor: { fontSize: 11, color: COLORS.gold, letterSpacing: 8, marginBottom: 4 },
+  headerTitle: { fontFamily: FONTS.amiriBold, fontSize: 24, color: COLORS.goldLight },
+
+  modeTabs: {
+    flexDirection: 'row', backgroundColor: COLORS.deep2,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(201,146,46,0.2)',
+    marginTop: SPACING.sm,
+  },
+  modeTab: {
+    flex: 1, paddingVertical: 12, alignItems: 'center',
+    borderBottomWidth: 2, borderBottomColor: 'transparent',
+  },
   modeTabActive: { borderBottomColor: COLORS.gold },
   modeTabText: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.muted },
   modeTabTextActive: { color: COLORS.goldLight, fontFamily: FONTS.cairoBold },
-  adabIntro: { backgroundColor: 'rgba(201,146,46,0.07)', borderRadius: RADIUS.md, padding: SPACING.lg, marginBottom: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.2)' },
+
+  // Adab
+  adabIntro: {
+    backgroundColor: 'rgba(201,146,46,0.07)', borderRadius: RADIUS.md,
+    padding: SPACING.lg, marginBottom: SPACING.lg,
+    borderWidth: 1, borderColor: 'rgba(201,146,46,0.2)',
+  },
   adabIntroTitle: { fontFamily: FONTS.amiriBold, fontSize: 20, color: COLORS.goldLight, marginBottom: 6 },
   adabIntroSub: { fontFamily: FONTS.amiri, fontSize: 13, color: COLORS.cream3, lineHeight: 24 },
-  adabCard: { flexDirection: 'row', gap: SPACING.md, backgroundColor: COLORS.deep2, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: 'rgba(201,146,46,0.1)', alignItems: 'flex-start' },
-  adabNumWrap: { width: 30, height: 30, borderRadius: 15, backgroundColor: COLORS.gold, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  adabCard: {
+    flexDirection: 'row', gap: SPACING.md, backgroundColor: COLORS.deep2,
+    borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm,
+    borderWidth: 1, borderColor: 'rgba(201,146,46,0.1)', alignItems: 'flex-start',
+  },
+  adabNumWrap: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: COLORS.gold, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
   adabNum: { fontFamily: FONTS.cairoBold, fontSize: 14, color: COLORS.deep },
   adabContent: { flex: 1 },
   adabTitle: { fontFamily: FONTS.cairoBold, fontSize: 13, color: COLORS.goldLight, marginBottom: 4 },
   adabText: { fontFamily: FONTS.amiri, fontSize: 15, color: COLORS.cream2, lineHeight: 26 },
-  tipsBox: { backgroundColor: COLORS.deep2, borderRadius: RADIUS.md, padding: SPACING.lg, marginTop: SPACING.sm, borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)' },
+  tipsBox: {
+    backgroundColor: COLORS.deep2, borderRadius: RADIUS.md, padding: SPACING.lg,
+    marginTop: SPACING.sm, borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)',
+  },
   tipsTitle: { fontFamily: FONTS.cairoBold, fontSize: 15, color: COLORS.goldLight, marginBottom: SPACING.md },
-  tipItem: { flexDirection: 'row', gap: 8, marginBottom: 6 },
-  tipDot: { color: COLORS.gold, fontSize: 16, lineHeight: 22 },
+  tipItem: { flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'flex-start' },
+  tipDot: { color: COLORS.gold, fontSize: 10, marginTop: 5 },
   tipText: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.cream3, flex: 1, lineHeight: 22 },
-  catScroll: { maxHeight: 52, marginVertical: SPACING.sm },
-  catPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(201,146,46,0.25)', backgroundColor: COLORS.deep2 },
-  catPillActive: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
-  catPillText: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.cream2 },
-  moodBox: { backgroundColor: 'rgba(201,146,46,0.06)', borderRightWidth: 3, borderRightColor: COLORS.gold, borderRadius: RADIUS.sm, padding: SPACING.md, marginBottom: SPACING.md },
-  moodText: { fontFamily: FONTS.amiri, fontSize: 14, color: COLORS.cream3, lineHeight: 26 },
-  duaaCard: { backgroundColor: COLORS.deep2, borderRadius: RADIUS.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: 'rgba(201,146,46,0.1)', overflow: 'hidden' },
+
+  // Categories
+  catScroll: { maxHeight: 56 },
+  catPill: {
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full,
+    borderWidth: 1, borderColor: 'rgba(201,146,46,0.25)', backgroundColor: COLORS.deep2,
+  },
+  catPillText: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.cream3 },
+  catPillTextActive: { color: COLORS.deep, fontFamily: FONTS.cairoBold },
+
+  moodBox: {
+    backgroundColor: 'rgba(201,146,46,0.05)', borderRightWidth: 3,
+    borderRadius: RADIUS.sm, padding: SPACING.md, marginBottom: SPACING.md,
+  },
+  moodText: { fontFamily: FONTS.amiri, fontSize: 14, color: COLORS.cream3, lineHeight: 28 },
+
+  duaaCard: {
+    backgroundColor: COLORS.deep2, borderRadius: RADIUS.md, marginBottom: SPACING.sm,
+    borderWidth: 1, borderColor: 'rgba(201,146,46,0.1)', overflow: 'hidden',
+  },
   duaaHeader: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, gap: SPACING.sm },
   duaaNum: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   duaaNumText: { fontFamily: FONTS.cairoBold, fontSize: 12 },
   duaaSrc: { flex: 1, fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted },
   duaaArrow: { color: COLORS.muted, fontSize: 11 },
-  duaaBody: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg, borderTopWidth: 1, borderTopColor: 'rgba(201,146,46,0.08)', paddingTop: SPACING.md },
-  duaaArabic: { fontFamily: FONTS.amiri, fontSize: 17, color: COLORS.cream, lineHeight: 32, textAlign: 'right', direction: 'rtl' } as any,
-  noteBox: { backgroundColor: 'rgba(201,146,46,0.07)', borderRadius: RADIUS.sm, padding: SPACING.sm, marginTop: SPACING.sm, marginBottom: SPACING.sm },
-  noteText: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.cream3 },
+  duaaBody: {
+    paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg,
+    borderTopWidth: 1, borderTopColor: 'rgba(201,146,46,0.08)', paddingTop: SPACING.md,
+  },
+  duaaArabic: {
+    fontFamily: FONTS.amiri, fontSize: 18, color: COLORS.cream,
+    lineHeight: 34, textAlign: 'right',
+  } as any,
+  noteBox: {
+    borderRightWidth: 2, borderRadius: RADIUS.sm,
+    padding: SPACING.sm, marginVertical: SPACING.sm,
+    backgroundColor: 'rgba(245,200,66,0.05)',
+  },
+  noteText: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.cream3, lineHeight: 20 },
   duaaRef: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted, marginTop: 6 },
 });

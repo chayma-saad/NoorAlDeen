@@ -120,7 +120,7 @@ export default function App() {
   if (!fontsLoaded || !appReady) {
     return (
       <View style={styles.splash}>
-        <Text style={styles.splashText}>نور الدين</Text>
+        <Text style={styles.splashText}>ركز على دينك</Text>
         <Text style={styles.splashSub}>✦ جارٍ التحميل ✦</Text>
       </View>
     );
