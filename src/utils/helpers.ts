@@ -1,15 +1,9 @@
-export const toArabicNum = (n: number | string): string => {
-  const arabicNums = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  return String(n)
-    .split('')
-    .map((d) => (/\d/.test(d) ? arabicNums[parseInt(d)] : d))
-    .join('');
-};
+export const toArabicNum = (n: number | string): string => String(n);
 
 export const formatTime = (time: string): string => {
   if (!time) return '--:--';
   const [h, m] = time.split(':');
-  return toArabicNum(`${h.padStart(2, '0')}:${m.padStart(2, '0')}`);
+  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
 };
 
 export const getTimeDiffMinutes = (timeStr: string): number => {

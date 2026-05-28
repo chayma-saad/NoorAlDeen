@@ -8,6 +8,7 @@
     "ios": "expo start --ios"
   },
   "dependencies": {
+    "firebase": "^10.14.1",
     "@expo-google-fonts/amiri": "^0.2.3",
     "@expo-google-fonts/cairo": "^0.2.3",
     "@expo/metro-runtime": "~6.1.2",

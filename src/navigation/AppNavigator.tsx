@@ -9,6 +9,7 @@ import DhikrScreen from '../screens/DhikrScreen';
 import QuranScreen from '../screens/QuranScreen';
 import HeartMapScreen from '../screens/HeartMapScreen';
 import DuaaScreen from '../screens/DuaaScreen';
+import QiblaScreen from '../screens/QiblaScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -20,6 +21,7 @@ const TABS = [
   { name: 'Quran',    icon: '📖',  label: 'القرآن',   component: QuranScreen },
   { name: 'Heart',    icon: '🫀',  label: 'القلب',    component: HeartMapScreen },
   { name: 'Duaa',     icon: '🤲',  label: 'أدعية',    component: DuaaScreen },
+  { name: 'Qibla',    icon: '🧭',  label: 'القبلة',   component: QiblaScreen },
 ];
 
 interface TabIconProps {

@@ -21,6 +21,12 @@ import AICompanion from './src/components/AICompanion';
 import { PrayerCallScreen } from './src/components/PrayerCallScreen';
 import { requestNotificationPermission } from './src/services/notifications';
 import { updateStreak } from './src/services/storage';
+import {
+  firebaseEnabled,
+  onAuthChange,
+  uploadDataToCloud,
+} from './src/services/firebase';
+import AuthScreen from './src/screens/AuthScreen';
 
 // ── BUG 1 FIX: await at top level is illegal in React Native.
 // The Android channel setup must live inside an async function, not at module scope.
@@ -52,6 +58,9 @@ interface PrayerCallData {
 export default function App() {
   const [appReady, setAppReady] = useState(false);
   const [callData, setCallData] = useState<PrayerCallData | null>(null);
+  // null = not yet determined, false = logged out / guest, string = user uid
+  const [userId, setUserId] = useState<string | false | null>(null);
+  const [guestMode, setGuestMode] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Amiri_400Regular,
@@ -65,7 +74,6 @@ export default function App() {
   useEffect(() => {
     async function prepare() {
       try {
-        // ── BUG 1 FIX: call channel setup here, inside async function
         await setupAndroidChannel();
         await requestNotificationPermission();
         await updateStreak();
@@ -76,6 +84,22 @@ export default function App() {
       }
     }
     prepare();
+  }, []);
+
+  // Watch Firebase auth state — only when Firebase is configured
+  useEffect(() => {
+    if (!firebaseEnabled) { setUserId(false); return; }
+    const unsub = onAuthChange((user) => {
+      if (user) {
+        setUserId(user.uid);
+        setGuestMode(false);
+        // Sync local data to cloud whenever user is confirmed logged in
+        uploadDataToCloud(user.uid).catch(() => {});
+      } else {
+        setUserId(false);
+      }
+    });
+    return unsub;
   }, []);
 
   // ── BUG 2 FIX: Notification listeners must be inside useEffect, not at module scope.
@@ -117,13 +141,23 @@ export default function App() {
     }
   }, [fontsLoaded, appReady]);
 
-  if (!fontsLoaded || !appReady) {
+  // Show auth screen when Firebase is enabled and user is not signed in / not in guest mode
+  const showAuth = firebaseEnabled && userId === false && !guestMode;
+  // Still loading auth state
+  const authLoading = firebaseEnabled && userId === null && !guestMode;
+
+  if (!fontsLoaded || !appReady || authLoading) {
     return (
       <View style={styles.splash}>
         <Text style={styles.splashText}>ركز على دينك</Text>
         <Text style={styles.splashSub}>✦ جارٍ التحميل ✦</Text>
       </View>
     );
+  }
+
+  // Auth screen — shown when Firebase is on and user is logged out
+  if (showAuth) {
+    return <AuthScreen onGuest={() => setGuestMode(true)} />;
   }
 
   // Prayer call screen overlays everything
