@@ -1,4 +1,4 @@
-# ركز على دينك — Focus on Your Deen
+# ركز على دينك — Focus on Deen
 
 A personal Islamic companion app for spiritual growth — prayer times, Quran tracking, Dhikr counter, Duas library, and Hijri calendar. Built with Expo (React Native) and deployable as a free PWA on your iPhone via GitHub Pages.
 
@@ -122,7 +122,7 @@ npm install
 4. Click **Rename this repository**
 5. Type `focus_on_ur_deen` → click **Rename**
 
-Then update your local remote to point to the new name:
+Then update your local remote to point to the new name:  
 
 ```bash
 git remote set-url origin https://github.com/chaymasd/NoorAlDeen.git
