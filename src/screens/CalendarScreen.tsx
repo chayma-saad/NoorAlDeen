@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
+import { FONTS, SPACING, RADIUS, ThemeColors } from '../constants/theme';
 import {
   HIJRI_MONTHS,
   HARAM_MONTHS,
@@ -16,13 +16,17 @@ import {
 } from '../constants/islamicData';
 import { fetchHijriDate } from '../services/api';
 import { toArabicNum } from '../utils/helpers';
+import { useTheme } from '../contexts/ThemeContext';
 
 const WEEKDAYS = ['أح', 'إث', 'ثل', 'أر', 'خم', 'جم', 'سب'];
 const DAYS_IN_MONTH = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 30];
 const AYYAM_BEED = [13, 14, 15];
 
 export default function CalendarScreen() {
-  const [currentMonth, setCurrentMonth] = useState(11); // ذو الحجة
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const [currentMonth, setCurrentMonth] = useState(11);
   const [currentYear, setCurrentYear] = useState(1446);
   const [todayDay, setTodayDay] = useState(9);
   const [todayMonth, setTodayMonth] = useState(11);
@@ -63,7 +67,6 @@ export default function CalendarScreen() {
   const isHaram = HARAM_MONTHS.includes(currentMonth);
   const daysInMonth = DAYS_IN_MONTH[currentMonth];
 
-  // Simple offset calculation (approximate)
   const offset = (currentMonth * 2 + 3) % 7;
 
   const getEventForDay = (day: number) =>
@@ -89,7 +92,7 @@ export default function CalendarScreen() {
 
       {loading ? (
         <View style={{ alignItems: 'center', padding: 40 }}>
-          <ActivityIndicator color={COLORS.gold} />
+          <ActivityIndicator color={colors.gold} />
         </View>
       ) : (
         <>
@@ -138,7 +141,7 @@ export default function CalendarScreen() {
           {/* Legend */}
           <View style={styles.legend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: COLORS.gold }]} />
+              <View style={[styles.legendDot, { backgroundColor: colors.gold }]} />
               <Text style={styles.legendText}>مناسبة إسلامية</Text>
             </View>
             <View style={styles.legendItem}>
@@ -146,7 +149,7 @@ export default function CalendarScreen() {
               <Text style={styles.legendText}>أيام البيض</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: COLORS.green3 }]} />
+              <View style={[styles.legendDot, { backgroundColor: colors.green3 }]} />
               <Text style={styles.legendText}>فضيلة</Text>
             </View>
           </View>
@@ -210,49 +213,49 @@ export default function CalendarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.deep },
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.deep },
   calHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: SPACING.lg },
   navBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(201,146,46,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(201,146,46,0.3)' },
-  navBtnText: { color: COLORS.gold, fontSize: 14 },
-  monthName: { fontFamily: FONTS.amiriBold, fontSize: 24, color: COLORS.goldLight },
-  yearText: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted },
+  navBtnText: { color: colors.gold, fontSize: 14 },
+  monthName: { fontFamily: FONTS.amiriBold, fontSize: 24, color: colors.goldLight },
+  yearText: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.muted },
   weekdaysRow: { flexDirection: 'row', paddingHorizontal: SPACING.lg, marginBottom: 6 },
-  weekdayLabel: { flex: 1, textAlign: 'center', fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted },
+  weekdayLabel: { flex: 1, textAlign: 'center', fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: SPACING.lg, gap: 5 },
   dayEmpty: { width: `${100 / 7}%`, aspectRatio: 1 },
   dayCell: { width: `${100 / 7 - 1}%`, aspectRatio: 1, borderRadius: 8, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  dayCellToday: { backgroundColor: COLORS.gold },
-  dayCellSelected: { backgroundColor: 'rgba(201,146,46,0.2)', borderWidth: 1, borderColor: COLORS.gold },
+  dayCellToday: { backgroundColor: colors.gold },
+  dayCellSelected: { backgroundColor: 'rgba(201,146,46,0.2)', borderWidth: 1, borderColor: colors.gold },
   dayCellAyyam: { backgroundColor: 'rgba(240,201,106,0.1)', borderWidth: 1, borderColor: 'rgba(240,201,106,0.2)' },
   dayCellEvent: { backgroundColor: 'rgba(46,107,79,0.15)', borderWidth: 1, borderColor: 'rgba(76,175,133,0.25)' },
-  dayNum: { fontFamily: FONTS.cairo, fontSize: 14, color: COLORS.cream2 },
-  dayNumToday: { color: COLORS.deep, fontFamily: FONTS.cairoBold },
+  dayNum: { fontFamily: FONTS.cairo, fontSize: 14, color: colors.cream2 },
+  dayNumToday: { color: colors.deep, fontFamily: FONTS.cairoBold },
   eventDot: { position: 'absolute', bottom: 3, width: 4, height: 4, borderRadius: 2 },
-  eventDotGold: { backgroundColor: COLORS.gold },
-  eventDotGreen: { backgroundColor: COLORS.green3 },
+  eventDotGold: { backgroundColor: colors.gold },
+  eventDotGreen: { backgroundColor: colors.green3 },
   legend: { flexDirection: 'row', justifyContent: 'center', gap: 16, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.lg },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { fontFamily: FONTS.cairo, fontSize: 10, color: COLORS.muted },
+  legendText: { fontFamily: FONTS.cairo, fontSize: 10, color: colors.muted },
   selectedEventCard: { margin: SPACING.lg, backgroundColor: 'rgba(201,146,46,0.08)', borderRadius: RADIUS.md, padding: SPACING.md, flexDirection: 'row', gap: SPACING.md, alignItems: 'flex-start', borderWidth: 1, borderColor: 'rgba(201,146,46,0.25)' },
   selectedEventIcon: { fontSize: 28 },
-  selectedEventTitle: { fontFamily: FONTS.amiriBold, fontSize: 18, color: COLORS.goldLight, marginBottom: 4 },
-  selectedEventSig: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.cream3, lineHeight: 20 },
+  selectedEventTitle: { fontFamily: FONTS.amiriBold, fontSize: 18, color: colors.goldLight, marginBottom: 4 },
+  selectedEventSig: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.cream3, lineHeight: 20 },
   ayyamCard: { margin: SPACING.lg, backgroundColor: 'rgba(240,201,106,0.07)', borderRadius: RADIUS.md, padding: SPACING.md, borderWidth: 1, borderColor: 'rgba(240,201,106,0.2)' },
-  ayyamTitle: { fontFamily: FONTS.amiriBold, fontSize: 16, color: COLORS.goldLight, marginBottom: 6 },
-  ayyamText: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.cream3, lineHeight: 20 },
-  monthInfoCard: { margin: SPACING.lg, backgroundColor: COLORS.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.15)' },
-  monthInfoTitle: { fontFamily: FONTS.amiriBold, fontSize: 20, color: COLORS.goldLight, marginBottom: 8 },
-  monthVirtue: { fontFamily: FONTS.amiri, fontSize: 14, color: COLORS.cream2, lineHeight: 24 },
+  ayyamTitle: { fontFamily: FONTS.amiriBold, fontSize: 16, color: colors.goldLight, marginBottom: 6 },
+  ayyamText: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.cream3, lineHeight: 20 },
+  monthInfoCard: { margin: SPACING.lg, backgroundColor: colors.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.15)' },
+  monthInfoTitle: { fontFamily: FONTS.amiriBold, fontSize: 20, color: colors.goldLight, marginBottom: 8 },
+  monthVirtue: { fontFamily: FONTS.amiri, fontSize: 14, color: colors.cream2, lineHeight: 24 },
   haramBox: { marginTop: SPACING.md, backgroundColor: 'rgba(201,146,46,0.06)', borderRadius: RADIUS.md, padding: SPACING.md, borderWidth: 1, borderColor: 'rgba(201,146,46,0.25)' },
-  haramTitle: { fontFamily: FONTS.amiriBold, fontSize: 15, color: COLORS.goldLight, marginBottom: 6 },
-  haramText: { fontFamily: FONTS.amiri, fontSize: 13, color: COLORS.cream3, lineHeight: 22 },
+  haramTitle: { fontFamily: FONTS.amiriBold, fontSize: 15, color: colors.goldLight, marginBottom: 6 },
+  haramText: { fontFamily: FONTS.amiri, fontSize: 13, color: colors.cream3, lineHeight: 22 },
   ayyamBox: { marginTop: SPACING.sm, backgroundColor: 'rgba(240,201,106,0.06)', borderRadius: RADIUS.md, padding: SPACING.md, borderWidth: 1, borderColor: 'rgba(240,201,106,0.15)' },
-  ayyamBoxText: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.cream3, lineHeight: 20 },
-  eventsInMonthTitle: { fontFamily: FONTS.cairoBold, fontSize: 13, color: COLORS.muted, marginBottom: 8 },
-  evInMonthItem: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
+  ayyamBoxText: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.cream3, lineHeight: 20 },
+  eventsInMonthTitle: { fontFamily: FONTS.cairoBold, fontSize: 13, color: colors.muted, marginBottom: 8 },
+  evInMonthItem: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.borderTint },
   evInMonthIcon: { fontSize: 18 },
-  evInMonthLabel: { fontFamily: FONTS.amiri, fontSize: 16, color: COLORS.cream, flex: 1 },
-  evInMonthDay: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted },
+  evInMonthLabel: { fontFamily: FONTS.amiri, fontSize: 16, color: colors.cream, flex: 1 },
+  evInMonthDay: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted },
 });

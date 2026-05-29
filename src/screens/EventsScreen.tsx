@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   UIManager,
   Platform,
 } from 'react-native';
-import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
+import { FONTS, SPACING, RADIUS, ThemeColors } from '../constants/theme';
 import {
   ISLAMIC_EVENTS,
   ARAFA_DAY_PLAN,
@@ -18,19 +18,18 @@ import {
 import { toArabicNum } from '../utils/helpers';
 import { getEventChecks, toggleEventCheck } from '../services/storage';
 import { fetchHijriDate } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// Estimate days between current Hijri date and a target event (0-indexed months)
 function daysUntilEvent(
   currentDay: number,
-  currentMonth: number, // 0-indexed
+  currentMonth: number,
   targetDay: number,
-  targetMonth: number  // 0-indexed
+  targetMonth: number
 ): number {
-  // Average Hijri year ≈ 354.37 days, month ≈ 29.53 days
   const MONTH = 29.53;
   const YEAR = 354;
 
@@ -42,10 +41,13 @@ function daysUntilEvent(
 }
 
 export default function EventsScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({});
   const [hijriDay, setHijriDay] = useState(0);
-  const [hijriMonth, setHijriMonth] = useState(0); // 0-indexed
+  const [hijriMonth, setHijriMonth] = useState(0);
 
   useEffect(() => {
     loadAllChecks();
@@ -57,7 +59,7 @@ export default function EventsScreen() {
       const h = await fetchHijriDate();
       if (h) {
         setHijriDay(parseInt(h.day, 10));
-        setHijriMonth(h.month.number - 1); // API is 1-based → 0-based
+        setHijriMonth(h.month.number - 1);
       }
     } catch {}
   };
@@ -88,7 +90,6 @@ export default function EventsScreen() {
     return Object.values(c).filter(Boolean).length;
   };
 
-  // Which event is happening today or soonest?
   const todayEvent = ISLAMIC_EVENTS.find(
     (e) => e.hijriDay === hijriDay && e.hijriMonth === hijriMonth
   );
@@ -148,7 +149,6 @@ export default function EventsScreen() {
               </View>
               <View style={styles.periodTasks}>
                 {period.tasks.map((task, ti) => {
-                  // Consistent unique key: period-index * 100 + task-index
                   const taskIdx = pi * 100 + ti;
                   const done = checks['arafa']?.[String(taskIdx)];
                   return (
@@ -188,6 +188,8 @@ export default function EventsScreen() {
             doneCount={getDoneCount(event.id)}
             daysLeft={daysLeft}
             isToday={isToday}
+            styles={styles}
+            colors={colors}
           />
         );
       })}
@@ -204,17 +206,19 @@ interface EventCardProps {
   doneCount: number;
   daysLeft: number;
   isToday: boolean;
+  styles: ReturnType<typeof makeStyles>;
+  colors: ThemeColors;
 }
 
 function EventCard({
-  event, expanded, onToggle, checks, onCheck, doneCount, daysLeft, isToday,
+  event, expanded, onToggle, checks, onCheck, doneCount, daysLeft, isToday, styles, colors,
 }: EventCardProps) {
   const total = event.amaal.length;
   const progress = total > 0 ? doneCount / total : 0;
 
-  const accentColor = event.color === 'green' ? COLORS.green3
-    : event.color === 'blue' ? COLORS.blue3
-    : COLORS.gold;
+  const accentColor = event.color === 'green' ? colors.green3
+    : event.color === 'blue' ? colors.blue3
+    : colors.gold;
 
   return (
     <View style={[styles.eventCard, isToday && { borderColor: accentColor }]}>
@@ -240,7 +244,7 @@ function EventCard({
         </View>
         {daysLeft >= 0 && (
           <View style={[styles.badge, isToday && { backgroundColor: `${accentColor}33` }]}>
-            <Text style={[styles.badgeText, { color: isToday ? accentColor : COLORS.cream3 }]}>
+            <Text style={[styles.badgeText, { color: isToday ? accentColor : colors.cream3 }]}>
               {isToday ? 'اليوم' : `${toArabicNum(daysLeft)} يوم`}
             </Text>
           </View>
@@ -279,40 +283,40 @@ function EventCard({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.deep },
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.deep },
 
   header: { alignItems: 'center', paddingTop: SPACING.xl, paddingBottom: SPACING.lg, paddingHorizontal: SPACING.lg },
-  headerDecor: { fontSize: 12, color: COLORS.gold, letterSpacing: 8, marginBottom: 6 },
-  headerTitle: { fontFamily: FONTS.amiriBold, fontSize: 26, color: COLORS.goldLight, marginBottom: 4 },
-  headerSub: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted },
+  headerDecor: { fontSize: 12, color: colors.gold, letterSpacing: 8, marginBottom: 6 },
+  headerTitle: { fontFamily: FONTS.amiriBold, fontSize: 26, color: colors.goldLight, marginBottom: 4 },
+  headerSub: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.muted },
 
   todayBanner: {
     marginHorizontal: SPACING.lg, marginBottom: SPACING.md,
-    backgroundColor: COLORS.deep2,
+    backgroundColor: colors.deep2,
     borderRadius: RADIUS.lg, padding: SPACING.lg,
     flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
-    borderWidth: 1, borderColor: COLORS.gold,
+    borderWidth: 1, borderColor: colors.gold,
   },
   todayIcon: { fontSize: 30 },
   todayTextBlock: { flex: 1 },
-  todayLabel: { fontFamily: FONTS.cairo, fontSize: 10, color: COLORS.gold },
-  todayTitle: { fontFamily: FONTS.amiriBold, fontSize: 16, color: COLORS.goldLight },
-  todayBtn: { backgroundColor: COLORS.gold, borderRadius: RADIUS.full, paddingHorizontal: 14, paddingVertical: 7 },
-  todayBtnText: { fontFamily: FONTS.cairoBold, fontSize: 12, color: COLORS.deep },
+  todayLabel: { fontFamily: FONTS.cairo, fontSize: 10, color: colors.gold },
+  todayTitle: { fontFamily: FONTS.amiriBold, fontSize: 16, color: colors.goldLight },
+  todayBtn: { backgroundColor: colors.gold, borderRadius: RADIUS.full, paddingHorizontal: 14, paddingVertical: 7 },
+  todayBtnText: { fontFamily: FONTS.cairoBold, fontSize: 12, color: colors.deep },
 
   dayPlanContainer: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md },
 
   hadithBox: {
     backgroundColor: 'rgba(201,146,46,0.06)',
-    borderRightWidth: 3, borderRightColor: COLORS.gold,
+    borderRightWidth: 3, borderRightColor: colors.gold,
     padding: SPACING.md, borderRadius: RADIUS.sm, marginBottom: SPACING.sm,
   },
-  hadithText: { fontFamily: FONTS.amiri, fontSize: 14, color: COLORS.cream3, lineHeight: 26 },
-  hadithRef: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted, marginTop: 4 },
+  hadithText: { fontFamily: FONTS.amiri, fontSize: 14, color: colors.cream3, lineHeight: 26 },
+  hadithRef: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted, marginTop: 4 },
 
   periodCard: {
-    backgroundColor: COLORS.deep2, borderRadius: RADIUS.md, marginBottom: SPACING.sm,
+    backgroundColor: colors.deep2, borderRadius: RADIUS.md, marginBottom: SPACING.sm,
     borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)', overflow: 'hidden',
   },
   periodHeader: {
@@ -321,23 +325,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: 'rgba(201,146,46,0.12)',
   },
   periodIcon: { fontSize: 22 },
-  periodName: { fontFamily: FONTS.amiriBold, fontSize: 15, color: COLORS.goldLight },
-  periodTime: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted },
+  periodName: { fontFamily: FONTS.amiriBold, fontSize: 15, color: colors.goldLight },
+  periodTime: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted },
   periodTasks: { padding: SPACING.md, gap: SPACING.sm },
 
   eventCard: {
     marginHorizontal: SPACING.lg, marginBottom: SPACING.md,
-    backgroundColor: COLORS.deep2, borderRadius: RADIUS.lg,
+    backgroundColor: colors.deep2, borderRadius: RADIUS.lg,
     borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)', overflow: 'hidden',
   },
   eventCardHeader: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, gap: SPACING.sm },
   eventIcon: { width: 48, height: 48, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' },
   eventIconText: { fontSize: 22 },
   eventMeta: { flex: 1 },
-  eventTitle: { fontFamily: FONTS.amiriBold, fontSize: 16, color: COLORS.cream },
-  eventDate: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted, marginTop: 2 },
+  eventTitle: { fontFamily: FONTS.amiriBold, fontSize: 16, color: colors.cream },
+  eventDate: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted, marginTop: 2 },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
-  progressOuter: { flex: 1, height: 3, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 2, overflow: 'hidden' },
+  progressOuter: { flex: 1, height: 3, backgroundColor: colors.bgTint, borderRadius: 2, overflow: 'hidden' },
   progressInner: { height: 3, borderRadius: 2 },
   progressLabel: { fontFamily: FONTS.cairo, fontSize: 10 },
 
@@ -346,15 +350,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 4,
   },
   badgeText: { fontFamily: FONTS.cairoBold, fontSize: 11 },
-  chevron: { color: COLORS.muted, fontSize: 11, marginLeft: 2 },
+  chevron: { color: colors.muted, fontSize: 11, marginLeft: 2 },
 
   eventBody: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg, gap: SPACING.sm },
-  eventSig: { fontFamily: FONTS.amiri, fontSize: 14, color: COLORS.cream3, lineHeight: 26 },
-  amaalTitle: { fontFamily: FONTS.cairoBold, fontSize: 12, color: COLORS.muted, marginTop: SPACING.sm },
+  eventSig: { fontFamily: FONTS.amiri, fontSize: 14, color: colors.cream3, lineHeight: 26 },
+  amaalTitle: { fontFamily: FONTS.cairoBold, fontSize: 12, color: colors.muted, marginTop: SPACING.sm },
 
   taskItem: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
-    paddingVertical: SPACING.sm, backgroundColor: COLORS.deep3,
+    paddingVertical: SPACING.sm, backgroundColor: colors.deep3,
     borderRadius: RADIUS.sm, paddingHorizontal: SPACING.md,
   },
   taskItemDone: { opacity: 0.6 },
@@ -363,8 +367,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(201,146,46,0.35)', alignItems: 'center',
     justifyContent: 'center', flexShrink: 0,
   },
-  taskCheckDone: { backgroundColor: COLORS.green2, borderColor: COLORS.green3 },
+  taskCheckDone: { backgroundColor: colors.green2, borderColor: colors.green3 },
   taskCheckMark: { fontSize: 12, color: 'white' },
-  taskText: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.cream2, flex: 1 },
-  taskTextDone: { color: COLORS.muted, textDecorationLine: 'line-through' },
+  taskText: { fontFamily: FONTS.cairo, fontSize: 13, color: colors.cream2, flex: 1 },
+  taskTextDone: { color: colors.muted, textDecorationLine: 'line-through' },
 });

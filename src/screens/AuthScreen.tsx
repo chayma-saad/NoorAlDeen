@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,13 +11,17 @@ import {
   ScrollView,
 } from 'react-native';
 import { signIn, signUp, downloadDataFromCloud } from '../services/firebase';
-import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
+import { FONTS, SPACING, RADIUS, ThemeColors } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface Props {
   onGuest: () => void;
 }
 
 export default function AuthScreen({ onGuest }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,10 +45,8 @@ export default function AuthScreen({ onGuest }: Props) {
         await signUp(email.trim(), password);
       } else {
         const cred = await signIn(email.trim(), password);
-        // Pull cloud data on sign-in
         await downloadDataFromCloud(cred.user.uid);
       }
-      // onAuthStateChanged in App.tsx will update the UI automatically
     } catch (e: any) {
       const code = e?.code ?? '';
       if (code === 'auth/email-already-in-use') setError('هذا البريد مستخدم بالفعل');
@@ -102,7 +104,7 @@ export default function AuthScreen({ onGuest }: Props) {
               value={email}
               onChangeText={setEmail}
               placeholder="example@email.com"
-              placeholderTextColor={COLORS.muted}
+              placeholderTextColor={colors.muted}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -114,7 +116,7 @@ export default function AuthScreen({ onGuest }: Props) {
               value={password}
               onChangeText={setPassword}
               placeholder="••••••••"
-              placeholderTextColor={COLORS.muted}
+              placeholderTextColor={colors.muted}
               secureTextEntry
             />
           </View>
@@ -129,7 +131,7 @@ export default function AuthScreen({ onGuest }: Props) {
             disabled={loading}
           >
             {loading
-              ? <ActivityIndicator color={COLORS.deep} />
+              ? <ActivityIndicator color={colors.deep} />
               : <Text style={styles.submitText}>
                   {mode === 'signin' ? 'دخول' : 'إنشاء الحساب'}
                 </Text>
@@ -147,8 +149,8 @@ export default function AuthScreen({ onGuest }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.deep },
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.deep },
   scroll: {
     flexGrow: 1,
     alignItems: 'center',
@@ -162,20 +164,20 @@ const styles = StyleSheet.create({
   logoTitle: {
     fontFamily: FONTS.amiriBold,
     fontSize: 32,
-    color: COLORS.goldLight,
+    color: colors.goldLight,
     letterSpacing: 1,
   },
   logoSub: {
     fontFamily: FONTS.cairo,
     fontSize: 13,
-    color: COLORS.muted,
+    color: colors.muted,
     letterSpacing: 2,
   },
 
   card: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: COLORS.deep2,
+    backgroundColor: colors.deep2,
     borderRadius: RADIUS.xl,
     padding: SPACING.xl,
     borderWidth: 1,
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
 
   toggle: {
     flexDirection: 'row',
-    backgroundColor: COLORS.deep,
+    backgroundColor: colors.deep,
     borderRadius: RADIUS.md,
     padding: 4,
   },
@@ -195,23 +197,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: RADIUS.sm,
   },
-  toggleBtnActive: { backgroundColor: COLORS.gold },
+  toggleBtnActive: { backgroundColor: colors.gold },
   toggleText: {
     fontFamily: FONTS.cairoSemiBold,
     fontSize: 14,
-    color: COLORS.muted,
+    color: colors.muted,
   },
-  toggleTextActive: { color: COLORS.deep },
+  toggleTextActive: { color: colors.deep },
 
   fields: { gap: SPACING.sm },
   label: {
     fontFamily: FONTS.cairoSemiBold,
     fontSize: 13,
-    color: COLORS.cream2,
+    color: colors.cream2,
     textAlign: 'right',
   },
   input: {
-    backgroundColor: COLORS.deep,
+    backgroundColor: colors.deep,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: 'rgba(201,146,46,0.2)',
@@ -219,19 +221,19 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     fontFamily: FONTS.cairo,
     fontSize: 15,
-    color: COLORS.cream,
+    color: colors.cream,
     textAlign: 'left',
   },
 
   errorText: {
     fontFamily: FONTS.cairo,
     fontSize: 13,
-    color: COLORS.error,
+    color: colors.error,
     textAlign: 'center',
   },
 
   submitBtn: {
-    backgroundColor: COLORS.gold,
+    backgroundColor: colors.gold,
     borderRadius: RADIUS.full,
     paddingVertical: 14,
     alignItems: 'center',
@@ -241,7 +243,7 @@ const styles = StyleSheet.create({
   submitText: {
     fontFamily: FONTS.cairoBold,
     fontSize: 16,
-    color: COLORS.deep,
+    color: colors.deep,
   },
 
   guestBtn: {
@@ -252,12 +254,12 @@ const styles = StyleSheet.create({
   guestText: {
     fontFamily: FONTS.cairoSemiBold,
     fontSize: 14,
-    color: COLORS.mutedLight,
+    color: colors.mutedLight,
     textDecorationLine: 'underline',
   },
   guestSub: {
     fontFamily: FONTS.cairo,
     fontSize: 11,
-    color: COLORS.muted,
+    color: colors.muted,
   },
 });

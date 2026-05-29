@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { COLORS, FONTS } from '../constants/theme';
+import { FONTS, ThemeColors } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 import PrayerTimesScreen from '../screens/PrayerTimesScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import EventsScreen from '../screens/EventsScreen';
@@ -28,9 +29,10 @@ interface TabIconProps {
   icon: string;
   label: string;
   focused: boolean;
+  styles: ReturnType<typeof makeStyles>;
 }
 
-function TabIcon({ icon, label, focused }: TabIconProps) {
+function TabIcon({ icon, label, focused, styles }: TabIconProps) {
   return (
     <View style={[styles.tabItem, focused && styles.tabItemFocused]}>
       {focused && <View style={styles.focusPill} />}
@@ -41,6 +43,9 @@ function TabIcon({ icon, label, focused }: TabIconProps) {
 }
 
 export default function AppNavigator() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -57,7 +62,7 @@ export default function AppNavigator() {
           component={tab.component}
           options={{
             tabBarIcon: ({ focused }) => (
-              <TabIcon icon={tab.icon} label={tab.label} focused={focused} />
+              <TabIcon icon={tab.icon} label={tab.label} focused={focused} styles={styles} />
             ),
           }}
         />
@@ -66,16 +71,15 @@ export default function AppNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   tabBar: {
-    backgroundColor: COLORS.deep2,
+    backgroundColor: colors.deep2,
     borderTopColor: 'rgba(201,146,46,0.15)',
     borderTopWidth: 1,
     height: Platform.OS === 'ios' ? 80 : 68,
     paddingBottom: Platform.OS === 'ios' ? 12 : 0,
     paddingTop: 0,
-    // Subtle inner shadow effect
-    shadowColor: COLORS.goldLight,
+    shadowColor: colors.goldLight,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.06,
     shadowRadius: 12,
@@ -99,7 +103,7 @@ const styles = StyleSheet.create({
     right: '10%',
     height: 2,
     borderRadius: 2,
-    backgroundColor: COLORS.gold,
+    backgroundColor: colors.gold,
   },
   tabIcon: {
     fontSize: 21,
@@ -112,11 +116,11 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontFamily: FONTS.cairo,
     fontSize: 9,
-    color: COLORS.muted,
+    color: colors.muted,
     textAlign: 'center',
   },
   tabLabelFocused: {
-    color: COLORS.goldLight,
+    color: colors.goldLight,
     fontFamily: FONTS.cairoBold,
     fontSize: 10,
   },

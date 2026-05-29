@@ -16,6 +16,7 @@ import {
   Cairo_700Bold,
 } from '@expo-google-fonts/cairo';
 import { COLORS } from './src/constants/theme';
+import { ThemeProvider } from './src/contexts/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AICompanion from './src/components/AICompanion';
 import { PrayerCallScreen } from './src/components/PrayerCallScreen';
@@ -173,6 +174,7 @@ export default function App() {
   }
 
   return (
+    <ThemeProvider>
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.deep} />
       <NavigationContainer
@@ -196,6 +198,7 @@ export default function App() {
         </SafeAreaView>
       </NavigationContainer>
     </SafeAreaProvider>
+    </ThemeProvider>
   );
 }
 

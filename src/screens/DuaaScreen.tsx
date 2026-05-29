@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,9 @@ import {
   UIManager,
   Platform,
 } from 'react-native';
-import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
+import { COLORS, FONTS, SPACING, RADIUS, ThemeColors } from '../constants/theme';
 import { toArabicNum } from '../utils/helpers';
+import { useTheme } from '../contexts/ThemeContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -45,8 +46,8 @@ interface Category {
   duaas: Duaa[];
 }
 
+// Accent colors are design choices tied to category meaning — stay fixed across themes
 const CATEGORIES: Category[] = [
-  // ── 1. Anxiety ──────────────────────────────────────────────────────────────
   {
     id: 'anxiety',
     label: 'القلق والهم',
@@ -63,8 +64,6 @@ const CATEGORIES: Category[] = [
       { text: 'اللهم اجعل في قلبي نورًا وفي بصري نورًا وفي سمعي نورًا واجعل لي نورًا', src: 'البخاري: ٦٣١٦' },
     ],
   },
-
-  // ── 2. Joy & Happiness ──────────────────────────────────────────────────────
   {
     id: 'joy',
     label: 'الفرح والبهجة',
@@ -81,8 +80,6 @@ const CATEGORIES: Category[] = [
       { text: 'رَبِّ أَوْزِعْنِي أَنْ أَشْكُرَ نِعْمَتَكَ الَّتِي أَنْعَمْتَ عَلَيَّ', src: 'الأحقاف: ١٥', note: 'شكر النعمة يُبقيها ويزيدها ويجلب الفرح المستدام' },
     ],
   },
-
-  // ── 3. Hope ─────────────────────────────────────────────────────────────────
   {
     id: 'hope',
     label: 'الرجاء والأمل',
@@ -98,8 +95,6 @@ const CATEGORIES: Category[] = [
       { text: 'اللهم إني أسألك علمًا نافعًا ورزقًا طيبًا وعملًا متقبَّلًا', src: 'صحيح ابن ماجه: ٧٥٣' },
     ],
   },
-
-  // ── 4. Marriage ─────────────────────────────────────────────────────────────
   {
     id: 'marriage',
     label: 'الزواج والنكاح',
@@ -116,8 +111,6 @@ const CATEGORIES: Category[] = [
       { text: 'وَمِنْ آيَاتِهِ أَنْ خَلَقَ لَكُمْ مِنْ أَنفُسِكُمْ أَزْوَاجًا لِتَسْكُنُوا إِلَيْهَا وَجَعَلَ بَيْنَكُم مَّوَدَّةً وَرَحْمَةً', src: 'الروم: ٢١', note: 'جعل الله المودة والرحمة من آياته الكونية — سُبحانه' },
     ],
   },
-
-  // ── 5. Qada al-haja ─────────────────────────────────────────────────────────
   {
     id: 'qadahaja',
     label: 'قضاء الحاجة',
@@ -134,8 +127,6 @@ const CATEGORIES: Category[] = [
       { text: 'اللهم إني عبدك ابن عبدك ابن أمتك ناصيتي بيدك ماضٍ فيَّ حكمك عدلٌ فيَّ قضاؤك', src: 'أحمد: ٣٧١٢', note: 'دعاء الفرج — قاله النبي ﷺ ومن دعا به أذهب الله همّه وأبدله فرحًا' },
     ],
   },
-
-  // ── 6. Forgiveness ──────────────────────────────────────────────────────────
   {
     id: 'forgiveness',
     label: 'التوبة والاستغفار',
@@ -150,8 +141,6 @@ const CATEGORIES: Category[] = [
       { text: 'أستغفر الله الذي لا إله إلا هو الحيَّ القيُّومَ وأتوب إليه', src: 'صحيح أبي داود: ١٣٤٣' },
     ],
   },
-
-  // ── 7. Strength ─────────────────────────────────────────────────────────────
   {
     id: 'strength',
     label: 'الثبات والقوة',
@@ -166,8 +155,6 @@ const CATEGORIES: Category[] = [
       { text: 'ربِّ أعنِّي ولا تُعِنْ عليَّ وانصرني ولا تنصر عليَّ', src: 'صحيح أبي داود: ١٣٣٧' },
     ],
   },
-
-  // ── 8. Gratitude ────────────────────────────────────────────────────────────
   {
     id: 'gratitude',
     label: 'الشكر والنعمة',
@@ -181,8 +168,6 @@ const CATEGORIES: Category[] = [
       { text: 'اللهم اقسِمْ لنا من خشيتك ما يحول بيننا وبين معاصيك', src: 'صحيح الترمذي: ٢٧٨٣' },
     ],
   },
-
-  // ── 9. Family ───────────────────────────────────────────────────────────────
   {
     id: 'family',
     label: 'الأسرة والذرية',
@@ -196,8 +181,6 @@ const CATEGORIES: Category[] = [
       { text: 'رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا', src: 'الإسراء: ٢٤' },
     ],
   },
-
-  // ── 10. Protection ──────────────────────────────────────────────────────────
   {
     id: 'protection',
     label: 'الحفظ والاستعاذة',
@@ -211,8 +194,6 @@ const CATEGORIES: Category[] = [
       { text: 'اللهم إني أعوذ بك من شر سمعي ومن شر بصري ومن شر لساني ومن شر قلبي', src: 'صحيح أبي داود: ١٣٧٢' },
     ],
   },
-
-  // ── 11. Health ──────────────────────────────────────────────────────────────
   {
     id: 'health',
     label: 'الصحة والعافية',
@@ -225,8 +206,6 @@ const CATEGORIES: Category[] = [
       { text: 'اللهم إني أعوذ بك من البَرَص والجنون والجُذَام ومن سيِّئ الأسقام', src: 'صحيح أبي داود: ١٣٧٥' },
     ],
   },
-
-  // ── 12. Quranic Duas ────────────────────────────────────────────────────────
   {
     id: 'quran',
     label: 'أدعية قرآنية',
@@ -248,6 +227,9 @@ const CATEGORIES: Category[] = [
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function DuaaScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [activeTab, setActiveTab] = useState<'adab' | 'cats'>('cats');
   const [activeCat, setActiveCat] = useState(CATEGORIES[0]);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -405,15 +387,15 @@ export default function DuaaScreen() {
 
 // ─── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.deep },
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.deep },
 
   header: { alignItems: 'center', paddingTop: SPACING.lg, paddingBottom: SPACING.sm },
-  headerDecor: { fontSize: 11, color: COLORS.gold, letterSpacing: 8, marginBottom: 4 },
-  headerTitle: { fontFamily: FONTS.amiriBold, fontSize: 24, color: COLORS.goldLight },
+  headerDecor: { fontSize: 11, color: colors.gold, letterSpacing: 8, marginBottom: 4 },
+  headerTitle: { fontFamily: FONTS.amiriBold, fontSize: 24, color: colors.goldLight },
 
   modeTabs: {
-    flexDirection: 'row', backgroundColor: COLORS.deep2,
+    flexDirection: 'row', backgroundColor: colors.deep2,
     borderBottomWidth: 1, borderBottomColor: 'rgba(201,146,46,0.2)',
     marginTop: SPACING.sm,
   },
@@ -421,70 +403,68 @@ const styles = StyleSheet.create({
     flex: 1, paddingVertical: 12, alignItems: 'center',
     borderBottomWidth: 2, borderBottomColor: 'transparent',
   },
-  modeTabActive: { borderBottomColor: COLORS.gold },
-  modeTabText: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.muted },
-  modeTabTextActive: { color: COLORS.goldLight, fontFamily: FONTS.cairoBold },
+  modeTabActive: { borderBottomColor: colors.gold },
+  modeTabText: { fontFamily: FONTS.cairo, fontSize: 13, color: colors.muted },
+  modeTabTextActive: { color: colors.goldLight, fontFamily: FONTS.cairoBold },
 
-  // Adab
   adabIntro: {
     backgroundColor: 'rgba(201,146,46,0.07)', borderRadius: RADIUS.md,
     padding: SPACING.lg, marginBottom: SPACING.lg,
     borderWidth: 1, borderColor: 'rgba(201,146,46,0.2)',
   },
-  adabIntroTitle: { fontFamily: FONTS.amiriBold, fontSize: 20, color: COLORS.goldLight, marginBottom: 6 },
-  adabIntroSub: { fontFamily: FONTS.amiri, fontSize: 13, color: COLORS.cream3, lineHeight: 24 },
+  adabIntroTitle: { fontFamily: FONTS.amiriBold, fontSize: 20, color: colors.goldLight, marginBottom: 6 },
+  adabIntroSub: { fontFamily: FONTS.amiri, fontSize: 13, color: colors.cream3, lineHeight: 24 },
   adabCard: {
-    flexDirection: 'row', gap: SPACING.md, backgroundColor: COLORS.deep2,
+    flexDirection: 'row', gap: SPACING.md, backgroundColor: colors.deep2,
     borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm,
     borderWidth: 1, borderColor: 'rgba(201,146,46,0.1)', alignItems: 'flex-start',
   },
   adabNumWrap: {
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: COLORS.gold, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  adabNum: { fontFamily: FONTS.cairoBold, fontSize: 14, color: COLORS.deep },
+  adabNum: { fontFamily: FONTS.cairoBold, fontSize: 14, color: colors.deep },
   adabContent: { flex: 1 },
-  adabTitle: { fontFamily: FONTS.cairoBold, fontSize: 13, color: COLORS.goldLight, marginBottom: 4 },
-  adabText: { fontFamily: FONTS.amiri, fontSize: 15, color: COLORS.cream2, lineHeight: 26 },
+  adabTitle: { fontFamily: FONTS.cairoBold, fontSize: 13, color: colors.goldLight, marginBottom: 4 },
+  adabText: { fontFamily: FONTS.amiri, fontSize: 15, color: colors.cream2, lineHeight: 26 },
   tipsBox: {
-    backgroundColor: COLORS.deep2, borderRadius: RADIUS.md, padding: SPACING.lg,
+    backgroundColor: colors.deep2, borderRadius: RADIUS.md, padding: SPACING.lg,
     marginTop: SPACING.sm, borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)',
   },
-  tipsTitle: { fontFamily: FONTS.cairoBold, fontSize: 15, color: COLORS.goldLight, marginBottom: SPACING.md },
+  tipsTitle: { fontFamily: FONTS.cairoBold, fontSize: 15, color: colors.goldLight, marginBottom: SPACING.md },
   tipItem: { flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'flex-start' },
-  tipDot: { color: COLORS.gold, fontSize: 10, marginTop: 5 },
-  tipText: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.cream3, flex: 1, lineHeight: 22 },
+  tipDot: { color: colors.gold, fontSize: 10, marginTop: 5 },
+  tipText: { fontFamily: FONTS.cairo, fontSize: 13, color: colors.cream3, flex: 1, lineHeight: 22 },
 
-  // Categories
   catScroll: { maxHeight: 56 },
   catPill: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full,
-    borderWidth: 1, borderColor: 'rgba(201,146,46,0.25)', backgroundColor: COLORS.deep2,
+    borderWidth: 1, borderColor: 'rgba(201,146,46,0.25)', backgroundColor: colors.deep2,
   },
-  catPillText: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.cream3 },
-  catPillTextActive: { color: COLORS.deep, fontFamily: FONTS.cairoBold },
+  catPillText: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.cream3 },
+  catPillTextActive: { color: colors.deep, fontFamily: FONTS.cairoBold },
 
   moodBox: {
     backgroundColor: 'rgba(201,146,46,0.05)', borderRightWidth: 3,
     borderRadius: RADIUS.sm, padding: SPACING.md, marginBottom: SPACING.md,
   },
-  moodText: { fontFamily: FONTS.amiri, fontSize: 14, color: COLORS.cream3, lineHeight: 28 },
+  moodText: { fontFamily: FONTS.amiri, fontSize: 14, color: colors.cream3, lineHeight: 28 },
 
   duaaCard: {
-    backgroundColor: COLORS.deep2, borderRadius: RADIUS.md, marginBottom: SPACING.sm,
+    backgroundColor: colors.deep2, borderRadius: RADIUS.md, marginBottom: SPACING.sm,
     borderWidth: 1, borderColor: 'rgba(201,146,46,0.1)', overflow: 'hidden',
   },
   duaaHeader: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, gap: SPACING.sm },
   duaaNum: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   duaaNumText: { fontFamily: FONTS.cairoBold, fontSize: 12 },
-  duaaSrc: { flex: 1, fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted },
-  duaaArrow: { color: COLORS.muted, fontSize: 11 },
+  duaaSrc: { flex: 1, fontFamily: FONTS.cairo, fontSize: 12, color: colors.muted },
+  duaaArrow: { color: colors.muted, fontSize: 11 },
   duaaBody: {
     paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg,
     borderTopWidth: 1, borderTopColor: 'rgba(201,146,46,0.08)', paddingTop: SPACING.md,
   },
   duaaArabic: {
-    fontFamily: FONTS.amiri, fontSize: 18, color: COLORS.cream,
+    fontFamily: FONTS.amiri, fontSize: 18, color: colors.cream,
     lineHeight: 34, textAlign: 'right',
   } as any,
   noteBox: {
@@ -492,6 +472,6 @@ const styles = StyleSheet.create({
     padding: SPACING.sm, marginVertical: SPACING.sm,
     backgroundColor: 'rgba(245,200,66,0.05)',
   },
-  noteText: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.cream3, lineHeight: 20 },
-  duaaRef: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted, marginTop: 6 },
+  noteText: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.cream3, lineHeight: 20 },
+  duaaRef: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted, marginTop: 6 },
 });

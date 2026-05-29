@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,16 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
-import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
+import { FONTS, SPACING, RADIUS, ThemeColors } from '../constants/theme';
 import { QURAN_PORTIONS } from '../constants/islamicData';
 import { toArabicNum } from '../utils/helpers';
 import { getQuranJuz, cycleJuzState, getDailyChecks, toggleDailyCheck } from '../services/storage';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function QuranScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [juzProgress, setJuzProgress] = useState<Record<number, 'done' | 'partial' | 'none'>>({});
   const [portionChecks, setPortionChecks] = useState<Record<string, boolean>>({});
 
@@ -157,43 +161,43 @@ export default function QuranScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.deep },
-  screenTitle: { fontFamily: FONTS.amiriBold, fontSize: 22, color: COLORS.goldLight, padding: SPACING.lg, paddingBottom: SPACING.sm },
-  progressCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md, backgroundColor: COLORS.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.15)' },
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.deep },
+  screenTitle: { fontFamily: FONTS.amiriBold, fontSize: 22, color: colors.goldLight, padding: SPACING.lg, paddingBottom: SPACING.sm },
+  progressCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md, backgroundColor: colors.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.15)' },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
-  progressLabel: { fontFamily: FONTS.amiri, fontSize: 18, color: COLORS.cream },
-  progressPct: { fontFamily: FONTS.cairoBold, fontSize: 20, color: COLORS.gold },
-  progressBarOuter: { height: 8, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 4, overflow: 'hidden', marginBottom: SPACING.md },
-  progressBarInner: { height: 8, backgroundColor: COLORS.green3, borderRadius: 4 },
+  progressLabel: { fontFamily: FONTS.amiri, fontSize: 18, color: colors.cream },
+  progressPct: { fontFamily: FONTS.cairoBold, fontSize: 20, color: colors.gold },
+  progressBarOuter: { height: 8, backgroundColor: colors.bgTint, borderRadius: 4, overflow: 'hidden', marginBottom: SPACING.md },
+  progressBarInner: { height: 8, backgroundColor: colors.green3, borderRadius: 4 },
   progressStats: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.sm },
-  progressStat: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted },
-  progressHint: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted, textAlign: 'center', marginTop: 4 },
-  sectionTitle: { fontFamily: FONTS.amiriBold, fontSize: 17, color: COLORS.goldLight, paddingHorizontal: SPACING.lg, marginBottom: SPACING.sm },
+  progressStat: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted },
+  progressHint: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted, textAlign: 'center', marginTop: 4 },
+  sectionTitle: { fontFamily: FONTS.amiriBold, fontSize: 17, color: colors.goldLight, paddingHorizontal: SPACING.lg, marginBottom: SPACING.sm },
   juzGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: SPACING.lg, gap: 6, marginBottom: SPACING.lg },
-  juzCell: { width: '17%', aspectRatio: 1, backgroundColor: COLORS.deep2, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: 'rgba(201,146,46,0.1)', alignItems: 'center', justifyContent: 'center' },
-  juzCellDone: { backgroundColor: 'rgba(46,107,79,0.2)', borderColor: COLORS.green2 },
+  juzCell: { width: '17%', aspectRatio: 1, backgroundColor: colors.deep2, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: 'rgba(201,146,46,0.1)', alignItems: 'center', justifyContent: 'center' },
+  juzCellDone: { backgroundColor: 'rgba(46,107,79,0.2)', borderColor: colors.green2 },
   juzCellPartial: { backgroundColor: 'rgba(201,146,46,0.08)', borderColor: 'rgba(201,146,46,0.3)' },
-  juzNum: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.cream2 },
-  juzNumDone: { color: COLORS.green3 },
-  juzLabel: { fontSize: 10, color: COLORS.green3 },
-  portionsCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md, backgroundColor: COLORS.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)' },
-  portionsHint: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted, marginBottom: SPACING.md },
-  portionItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingVertical: SPACING.sm, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
+  juzNum: { fontFamily: FONTS.cairo, fontSize: 13, color: colors.cream2 },
+  juzNumDone: { color: colors.green3 },
+  juzLabel: { fontSize: 10, color: colors.green3 },
+  portionsCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md, backgroundColor: colors.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)' },
+  portionsHint: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.muted, marginBottom: SPACING.md },
+  portionItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingVertical: SPACING.sm, borderBottomWidth: 1, borderBottomColor: colors.borderTint },
   portionInfo: { flex: 1 },
-  portionText: { fontFamily: FONTS.amiri, fontSize: 16, color: COLORS.cream2 },
-  portionTextDone: { color: COLORS.muted, textDecorationLine: 'line-through' },
-  portionJuz: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted },
-  goalsCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md, backgroundColor: COLORS.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)' },
-  goalItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingVertical: SPACING.sm, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
+  portionText: { fontFamily: FONTS.amiri, fontSize: 16, color: colors.cream2 },
+  portionTextDone: { color: colors.muted, textDecorationLine: 'line-through' },
+  portionJuz: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted },
+  goalsCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md, backgroundColor: colors.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)' },
+  goalItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingVertical: SPACING.sm, borderBottomWidth: 1, borderBottomColor: colors.borderTint },
   goalInfo: { flex: 1 },
-  goalLabel: { fontFamily: FONTS.cairo, fontSize: 14, color: COLORS.cream2 },
-  goalLabelDone: { color: COLORS.muted, textDecorationLine: 'line-through' },
-  goalSub: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted },
+  goalLabel: { fontFamily: FONTS.cairo, fontSize: 14, color: colors.cream2 },
+  goalLabelDone: { color: colors.muted, textDecorationLine: 'line-through' },
+  goalSub: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted },
   taskCheck: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: 'rgba(201,146,46,0.35)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  taskCheckDone: { backgroundColor: COLORS.green2, borderColor: COLORS.green3 },
+  taskCheckDone: { backgroundColor: colors.green2, borderColor: colors.green3 },
   taskCheckMark: { fontSize: 12, color: 'white' },
-  quoteCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.lg, backgroundColor: 'rgba(201,146,46,0.05)', borderRightWidth: 3, borderRightColor: COLORS.gold, borderRadius: RADIUS.sm, padding: SPACING.lg },
-  quoteText: { fontFamily: FONTS.amiriBold, fontSize: 18, color: COLORS.cream, lineHeight: 32, marginBottom: 6 },
-  quoteRef: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted },
+  quoteCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.lg, backgroundColor: 'rgba(201,146,46,0.05)', borderRightWidth: 3, borderRightColor: colors.gold, borderRadius: RADIUS.sm, padding: SPACING.lg },
+  quoteText: { fontFamily: FONTS.amiriBold, fontSize: 18, color: colors.cream, lineHeight: 32, marginBottom: 6 },
+  quoteRef: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.muted },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Vibration,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
+import { FONTS, SPACING, RADIUS, ThemeColors } from '../constants/theme';
 import {
   DHIKR_LIST,
   MORNING_ADHKAR,
@@ -19,8 +19,12 @@ import {
 } from '../constants/islamicData';
 import { toArabicNum } from '../utils/helpers';
 import { getDhikrCounts, setDhikrCount, getDailyChecks, toggleDailyCheck } from '../services/storage';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function DhikrScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [activeDhikr, setActiveDhikr] = useState(DHIKR_LIST[0]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [dailyChecks, setDailyChecks] = useState<Record<string, boolean>>({});
@@ -43,7 +47,6 @@ export default function DhikrScreen() {
   const progress = Math.min(currentCount / activeDhikr.target, 1);
 
   const tapCounter = async () => {
-    // Haptic feedback
     if (Platform.OS !== 'web') {
       try {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -55,13 +58,11 @@ export default function DhikrScreen() {
     setCounts(newCounts);
     await setDhikrCount(activeDhikr.id, newCount);
 
-    // Pulse animation
     Animated.sequence([
       Animated.timing(scaleAnim, { toValue: 1.08, duration: 80, useNativeDriver: true }),
       Animated.timing(scaleAnim, { toValue: 1, duration: 120, useNativeDriver: true }),
     ]).start();
 
-    // Celebrate when target reached
     if (newCount === activeDhikr.target) {
       setCelebration(true);
       Animated.sequence([
@@ -218,6 +219,8 @@ interface AdhkarSectionProps {
 }
 
 function AdhkarSection({ title, icon, items, prefix, checks, onCheck }: AdhkarSectionProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const done = items.filter((_, i) => checks[`${prefix}_${i}`]).length;
   return (
     <View style={styles.adhkarSection}>
@@ -242,46 +245,46 @@ function AdhkarSection({ title, icon, items, prefix, checks, onCheck }: AdhkarSe
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.deep },
-  screenTitle: { fontFamily: FONTS.amiriBold, fontSize: 22, color: COLORS.goldLight, padding: SPACING.lg, paddingBottom: SPACING.sm },
-  counterWidget: { margin: SPACING.lg, marginTop: 0, backgroundColor: COLORS.deep2, borderRadius: RADIUS.xl, padding: SPACING.xl, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(201,146,46,0.2)' },
-  counterName: { fontFamily: FONTS.amiriBold, fontSize: 26, color: COLORS.cream, marginBottom: 4 },
-  counterTranslit: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted, marginBottom: SPACING.lg },
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.deep },
+  screenTitle: { fontFamily: FONTS.amiriBold, fontSize: 22, color: colors.goldLight, padding: SPACING.lg, paddingBottom: SPACING.sm },
+  counterWidget: { margin: SPACING.lg, marginTop: 0, backgroundColor: colors.deep2, borderRadius: RADIUS.xl, padding: SPACING.xl, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(201,146,46,0.2)' },
+  counterName: { fontFamily: FONTS.amiriBold, fontSize: 26, color: colors.cream, marginBottom: 4 },
+  counterTranslit: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.muted, marginBottom: SPACING.lg },
   counterCircle: { width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(201,146,46,0.1)', borderWidth: 2, borderColor: 'rgba(201,146,46,0.3)', alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.lg },
-  counterNum: { fontFamily: FONTS.cairoBold, fontSize: 56, color: COLORS.goldLight, lineHeight: 64 },
-  counterTarget: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted },
-  progressOuter: { width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden', marginBottom: SPACING.lg },
-  progressInner: { height: 6, backgroundColor: COLORS.gold, borderRadius: 3 },
+  counterNum: { fontFamily: FONTS.cairoBold, fontSize: 56, color: colors.goldLight, lineHeight: 64 },
+  counterTarget: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.muted },
+  progressOuter: { width: '100%', height: 6, backgroundColor: colors.bgTint, borderRadius: 3, overflow: 'hidden', marginBottom: SPACING.lg },
+  progressInner: { height: 6, backgroundColor: colors.gold, borderRadius: 3 },
   celebrationBadge: { backgroundColor: 'rgba(46,107,79,0.2)', borderRadius: RADIUS.full, paddingHorizontal: 16, paddingVertical: 6, marginBottom: SPACING.md },
-  celebrationText: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.green3 },
+  celebrationText: { fontFamily: FONTS.cairo, fontSize: 13, color: colors.green3 },
   counterBtns: { flexDirection: 'row', gap: SPACING.md },
-  tapBtn: { backgroundColor: COLORS.gold, borderRadius: RADIUS.full, paddingHorizontal: 28, paddingVertical: 12 },
-  tapBtnText: { fontFamily: FONTS.cairoBold, fontSize: 16, color: COLORS.deep },
-  resetBtn: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: RADIUS.full, paddingHorizontal: 20, paddingVertical: 12 },
-  resetBtnText: { fontFamily: FONTS.cairo, fontSize: 14, color: COLORS.muted },
+  tapBtn: { backgroundColor: colors.gold, borderRadius: RADIUS.full, paddingHorizontal: 28, paddingVertical: 12 },
+  tapBtnText: { fontFamily: FONTS.cairoBold, fontSize: 16, color: colors.deep },
+  resetBtn: { backgroundColor: colors.bgTint, borderRadius: RADIUS.full, paddingHorizontal: 20, paddingVertical: 12 },
+  resetBtnText: { fontFamily: FONTS.cairo, fontSize: 14, color: colors.muted },
   dhikrSelector: { marginBottom: SPACING.md },
-  dhikrPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(201,146,46,0.25)', backgroundColor: COLORS.deep2 },
-  dhikrPillActive: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
-  dhikrPillText: { fontFamily: FONTS.amiri, fontSize: 14, color: COLORS.muted },
-  dhikrPillTextActive: { color: COLORS.deep, fontFamily: FONTS.amiriBold },
-  dhikrPillDone: { color: COLORS.green3 },
-  allDhikrCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md, backgroundColor: COLORS.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)' },
-  sectionTitle: { fontFamily: FONTS.amiriBold, fontSize: 17, color: COLORS.goldLight, marginBottom: SPACING.md, borderBottomWidth: 1, borderBottomColor: 'rgba(201,146,46,0.15)', paddingBottom: SPACING.sm },
-  dhikrRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, paddingVertical: SPACING.sm, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
-  dhikrRowText: { fontFamily: FONTS.amiri, fontSize: 14, color: COLORS.cream2, width: 130 },
-  dhikrRowProgress: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 2, overflow: 'hidden' },
-  dhikrRowBar: { height: 4, backgroundColor: COLORS.green3, borderRadius: 2 },
-  dhikrRowCount: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted, width: 48, textAlign: 'left' },
-  adhkarSection: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md, backgroundColor: COLORS.deep2, borderRadius: RADIUS.lg, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(201,146,46,0.1)' },
+  dhikrPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(201,146,46,0.25)', backgroundColor: colors.deep2 },
+  dhikrPillActive: { backgroundColor: colors.gold, borderColor: colors.gold },
+  dhikrPillText: { fontFamily: FONTS.amiri, fontSize: 14, color: colors.muted },
+  dhikrPillTextActive: { color: colors.deep, fontFamily: FONTS.amiriBold },
+  dhikrPillDone: { color: colors.green3 },
+  allDhikrCard: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md, backgroundColor: colors.deep2, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(201,146,46,0.12)' },
+  sectionTitle: { fontFamily: FONTS.amiriBold, fontSize: 17, color: colors.goldLight, marginBottom: SPACING.md, borderBottomWidth: 1, borderBottomColor: 'rgba(201,146,46,0.15)', paddingBottom: SPACING.sm },
+  dhikrRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, paddingVertical: SPACING.sm, borderBottomWidth: 1, borderBottomColor: colors.borderTint },
+  dhikrRowText: { fontFamily: FONTS.amiri, fontSize: 14, color: colors.cream2, width: 130 },
+  dhikrRowProgress: { flex: 1, height: 4, backgroundColor: colors.bgTint, borderRadius: 2, overflow: 'hidden' },
+  dhikrRowBar: { height: 4, backgroundColor: colors.green3, borderRadius: 2 },
+  dhikrRowCount: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted, width: 48, textAlign: 'left' },
+  adhkarSection: { marginHorizontal: SPACING.lg, marginBottom: SPACING.md, backgroundColor: colors.deep2, borderRadius: RADIUS.lg, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(201,146,46,0.1)' },
   adhkarHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, padding: SPACING.md, backgroundColor: 'rgba(201,146,46,0.06)', borderBottomWidth: 1, borderBottomColor: 'rgba(201,146,46,0.12)' },
   adhkarIcon: { fontSize: 18 },
-  adhkarTitle: { fontFamily: FONTS.amiriBold, fontSize: 17, color: COLORS.goldLight, flex: 1 },
-  adhkarProgress: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted },
-  adhkarItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, padding: SPACING.md, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.03)' },
-  adhkarItemText: { fontFamily: FONTS.cairo, fontSize: 13, color: COLORS.cream2, flex: 1 },
-  adhkarItemDone: { color: COLORS.muted, textDecorationLine: 'line-through' },
+  adhkarTitle: { fontFamily: FONTS.amiriBold, fontSize: 17, color: colors.goldLight, flex: 1 },
+  adhkarProgress: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.muted },
+  adhkarItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, padding: SPACING.md, borderBottomWidth: 1, borderBottomColor: colors.borderTint },
+  adhkarItemText: { fontFamily: FONTS.cairo, fontSize: 13, color: colors.cream2, flex: 1 },
+  adhkarItemDone: { color: colors.muted, textDecorationLine: 'line-through' },
   taskCheck: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: 'rgba(201,146,46,0.35)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  taskCheckDone: { backgroundColor: COLORS.green2, borderColor: COLORS.green3 },
+  taskCheckDone: { backgroundColor: colors.green2, borderColor: colors.green3 },
   taskCheckMark: { fontSize: 12, color: 'white' },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
+import { FONTS, SPACING, RADIUS, ThemeColors } from '../constants/theme';
 import { askClaude } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface Message {
   id: string;
@@ -32,6 +33,9 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 export default function AICompanion() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [visible, setVisible] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -126,7 +130,7 @@ export default function AICompanion() {
             ))}
             {loading && (
               <View style={[styles.messageBubble, styles.assistantBubble]}>
-                <ActivityIndicator color={COLORS.gold} size="small" />
+                <ActivityIndicator color={colors.gold} size="small" />
                 <Text style={styles.loadingText}>جارٍ التفكير...</Text>
               </View>
             )}
@@ -155,7 +159,7 @@ export default function AICompanion() {
               value={input}
               onChangeText={setInput}
               placeholder="اسأل سؤالاً دينياً..."
-              placeholderTextColor={COLORS.muted}
+              placeholderTextColor={colors.muted}
               multiline
               textAlign="right"
               onSubmitEditing={() => sendMessage()}
@@ -174,33 +178,33 @@ export default function AICompanion() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   fabContainer: { position: 'absolute', bottom: 90, left: 20, zIndex: 999 },
-  fab: { width: 56, height: 56, borderRadius: 28, backgroundColor: COLORS.gold, alignItems: 'center', justifyContent: 'center', shadowColor: COLORS.gold, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 8 },
+  fab: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center', shadowColor: colors.gold, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 8 },
   fabIcon: { fontSize: 24 },
-  modal: { flex: 1, backgroundColor: COLORS.deep },
-  modalHeader: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, borderBottomWidth: 1, borderBottomColor: 'rgba(201,146,46,0.2)', backgroundColor: COLORS.deep2 },
-  closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { color: COLORS.muted, fontSize: 14 },
+  modal: { flex: 1, backgroundColor: colors.deep },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, borderBottomWidth: 1, borderBottomColor: 'rgba(201,146,46,0.2)', backgroundColor: colors.deep2 },
+  closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.bgTint, alignItems: 'center', justifyContent: 'center' },
+  closeBtnText: { color: colors.muted, fontSize: 14 },
   modalHeaderCenter: { flex: 1, alignItems: 'center' },
-  modalTitle: { fontFamily: FONTS.amiriBold, fontSize: 20, color: COLORS.goldLight },
-  modalSub: { fontFamily: FONTS.cairo, fontSize: 11, color: COLORS.muted },
+  modalTitle: { fontFamily: FONTS.amiriBold, fontSize: 20, color: colors.goldLight },
+  modalSub: { fontFamily: FONTS.cairo, fontSize: 11, color: colors.muted },
   aiDot: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  aiDotInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.green3 },
+  aiDotInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.green3 },
   messageList: { flex: 1 },
   messageBubble: { borderRadius: RADIUS.md, padding: SPACING.md, maxWidth: '88%' },
-  assistantBubble: { backgroundColor: COLORS.deep2, alignSelf: 'flex-start', borderWidth: 1, borderColor: 'rgba(201,146,46,0.15)' },
-  userBubble: { backgroundColor: COLORS.green, alignSelf: 'flex-end' },
-  assistantLabel: { fontFamily: FONTS.cairo, fontSize: 10, color: COLORS.gold, marginBottom: 4 },
-  messageText: { fontFamily: FONTS.amiri, fontSize: 15, color: COLORS.cream2, lineHeight: 26 },
+  assistantBubble: { backgroundColor: colors.deep2, alignSelf: 'flex-start', borderWidth: 1, borderColor: 'rgba(201,146,46,0.15)' },
+  userBubble: { backgroundColor: colors.green, alignSelf: 'flex-end' },
+  assistantLabel: { fontFamily: FONTS.cairo, fontSize: 10, color: colors.gold, marginBottom: 4 },
+  messageText: { fontFamily: FONTS.amiri, fontSize: 15, color: colors.cream2, lineHeight: 26 },
   userText: { color: 'white' },
-  loadingText: { fontFamily: FONTS.cairo, fontSize: 12, color: COLORS.muted, marginTop: 4 },
+  loadingText: { fontFamily: FONTS.cairo, fontSize: 12, color: colors.muted, marginTop: 4 },
   suggestionsScroll: { maxHeight: 50, marginBottom: SPACING.sm },
-  suggestionPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, backgroundColor: COLORS.deep2, borderWidth: 1, borderColor: 'rgba(201,146,46,0.25)' },
-  suggestionText: { fontFamily: FONTS.amiri, fontSize: 13, color: COLORS.cream3 },
-  inputRow: { flexDirection: 'row', gap: SPACING.sm, padding: SPACING.lg, borderTopWidth: 1, borderTopColor: 'rgba(201,146,46,0.15)', backgroundColor: COLORS.deep2 },
-  input: { flex: 1, backgroundColor: COLORS.deep3, borderRadius: RADIUS.md, padding: SPACING.md, color: COLORS.cream, fontFamily: FONTS.cairo, fontSize: 14, minHeight: 44, maxHeight: 120, borderWidth: 1, borderColor: 'rgba(201,146,46,0.2)' },
-  sendBtn: { backgroundColor: COLORS.gold, borderRadius: RADIUS.md, paddingHorizontal: 16, justifyContent: 'center' },
+  suggestionPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, backgroundColor: colors.deep2, borderWidth: 1, borderColor: 'rgba(201,146,46,0.25)' },
+  suggestionText: { fontFamily: FONTS.amiri, fontSize: 13, color: colors.cream3 },
+  inputRow: { flexDirection: 'row', gap: SPACING.sm, padding: SPACING.lg, borderTopWidth: 1, borderTopColor: 'rgba(201,146,46,0.15)', backgroundColor: colors.deep2 },
+  input: { flex: 1, backgroundColor: colors.deep3, borderRadius: RADIUS.md, padding: SPACING.md, color: colors.cream, fontFamily: FONTS.cairo, fontSize: 14, minHeight: 44, maxHeight: 120, borderWidth: 1, borderColor: 'rgba(201,146,46,0.2)' },
+  sendBtn: { backgroundColor: colors.gold, borderRadius: RADIUS.md, paddingHorizontal: 16, justifyContent: 'center' },
   sendBtnDisabled: { opacity: 0.4 },
-  sendBtnText: { fontFamily: FONTS.cairoBold, fontSize: 13, color: COLORS.deep },
+  sendBtnText: { fontFamily: FONTS.cairoBold, fontSize: 13, color: colors.deep },
 });
